@@ -19,10 +19,21 @@
       options: readUrlOptions(),
     };
     game.scenes = LM.sceneManager.createSceneManager(game);
+    game.audio = LM.audioHub.createAudioHub();
+    game.music = LM.music.createMusicPlayer(game.audio);
     game.show = function (sceneName, params) {
       game.scenes.replaceScene(LM.sceneFactories[sceneName](game, params || {}));
     };
-    game.onFirstGesture = function () {};
+    game.sfx = function (name) {
+      LM.sfx.playSfx(game.audio, name);
+    };
+    game.playTheme = function (themeId) {
+      game.music.play(LM.data.themes[themeId]);
+    };
+    game.onFirstGesture = function () {
+      game.audio.unlock();
+      game.playTheme('title');
+    };
     return game;
   }
 

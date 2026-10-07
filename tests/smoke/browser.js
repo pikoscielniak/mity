@@ -8,12 +8,15 @@ const { ROOT } = require('../helpers/load-game');
 const SCREENSHOT_DIR = path.join(ROOT, 'test-results');
 
 async function openGame(options) {
-  const settings = Object.assign({ htmlFile: 'index.html', query: '', width: 1280, height: 720 }, options);
+  const settings = Object.assign({ htmlFile: 'index.html', query: '', width: 1280, height: 720, deviceScaleFactor: 1 }, options);
   const browser = await chromium.launch({
     channel: 'msedge',
     args: ['--autoplay-policy=no-user-gesture-required'],
   });
-  const page = await browser.newPage({ viewport: { width: settings.width, height: settings.height } });
+  const page = await browser.newPage({
+    viewport: { width: settings.width, height: settings.height },
+    deviceScaleFactor: settings.deviceScaleFactor,
+  });
   const errors = [];
   page.on('pageerror', function (error) { errors.push(error.message); });
   page.on('console', function (message) {

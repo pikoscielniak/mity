@@ -14,7 +14,7 @@ test('the styleguide renders every widget without errors', async function () {
 });
 
 test('the game stays sharp on a high-DPI laptop screen', async function () {
-  const { browser, page, errors } = await openGame({ width: 1366, height: 768 });
+  const { browser, page, errors } = await openGame({ width: 1366, height: 768, deviceScaleFactor: 2 });
   try {
     await page.waitForTimeout(400);
     const size = await page.evaluate(function () {
