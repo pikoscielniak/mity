@@ -163,6 +163,14 @@
     LM.text.drawWrappedText(ctx, text, textLeft, rect.y + (rect.height - textHeight) / 2 + 20, maxWidth, style);
   }
 
+  // A small parchment tag, readable over any background; (x, y) is the text baseline centre.
+  function drawTag(ctx, text, x, y) {
+    const font = LM.text.boldFont(18);
+    const width = LM.text.measureTextWidth(ctx, text, font) + 20;
+    LM.draw.drawOutlinedRoundRect(ctx, { x: x - width / 2, y: y - 21, width: width, height: 28 }, 6, P.parchment, 2);
+    LM.text.drawTextLine(ctx, text, x, y, { font: font, color: P.ink, align: 'center' });
+  }
+
   function drawDimmer(ctx) {
     ctx.fillStyle = P.dimmer;
     ctx.fillRect(0, 0, LM.view.WIDTH, LM.view.HEIGHT);
@@ -236,6 +244,7 @@
     drawButton,
     drawNumberBadge,
     drawOptionRow,
+    drawTag,
     drawDimmer,
     drawTitleText,
     drawMeanderBand,

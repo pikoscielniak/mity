@@ -10,11 +10,7 @@
   const person = LM.characters.drawPerson;
   const looks = LM.characters.looks;
 
-  const FEATHER = '#fbf6ea';
-  const FEATHER_QUILL = '#c8b88e';
-  const WAX = '#f2c442';
   const CRETAN_SAIL = '#1d4f9a';
-  const CHEST_TO_FEET = 60;
   const DAY_SKY = { top: '#3a7fe0', bottom: '#d8f0ff', horizonY: 440, sunX: 1100, sunY: 110, sunRadius: 48 };
   const HOT_SKY = { top: '#e8702a', bottom: '#ffe6a8', horizonY: 440, sunX: 1010, sunY: 130, sunRadius: 72 };
   const DUSK_SKY = { top: '#4a4a9a', bottom: '#f6b47a' };
@@ -22,102 +18,8 @@
     skin: P.marble, hair: P.marbleShade, hairStyle: 'curly', beard: null, robe: P.marble, trim: P.marbleShade, dressLength: 'long',
   });
   const sicilianKing = Object.assign({}, looks.minos, { robe: '#2f8a4a', cape: '#ffd84a', hair: '#8a5a2a', beard: '#8a5a2a' });
-
-  // Feathers of one wing, from the body outwards: [along x, along y, length, angle].
-  const WING_FEATHERS = [
-    [6, 2, 34, 1.45], [16, 0, 40, 1.3], [26, -2, 46, 1.14], [36, -4, 50, 0.98],
-    [46, -7, 54, 0.8], [56, -10, 58, 0.6], [64, -12, 60, 0.4], [70, -14, 58, 0.2],
-  ];
-
-  // ---- Wings and flyers -------------------------------------------------------------------
-
-  function drawWingFeather(ctx, x, y, length, angle) {
-    ctx.save();
-    ctx.translate(x, y);
-    ctx.rotate(angle);
-    D.drawOutlinedEllipse(ctx, length / 2, 0, length / 2, length * 0.17, FEATHER, 1.6);
-    D.drawLine(ctx, 3, 0, length * 0.85, 0, FEATHER_QUILL, 1.4);
-    ctx.restore();
-  }
-
-  function drawWaxDrips(ctx, time) {
-    [14, 34, 54].forEach(function (dripX, index) {
-      const dripLength = 6 + ((time * 8 + index * 5) % 10);
-      D.drawLine(ctx, dripX, -dripX * 0.2 + 4, dripX, -dripX * 0.2 + 4 + dripLength, WAX, 4);
-    });
-  }
-
-  // wings: { flap (radians, up is positive), featherCount (0-8, default all), isMelting, and for the wearer: pose, tilt }.
-  // Drawn in a person's own coordinates, hanging from the shoulder on `side` (-1 left, 1 right).
-  function drawWing(ctx, side, wings, time) {
-    ctx.save();
-    ctx.translate(side * 14, -74);
-    ctx.scale(side, 1);
-    ctx.rotate(-(wings.flap || 0));
-    const featherCount = wings.featherCount === undefined ? WING_FEATHERS.length : wings.featherCount;
-    WING_FEATHERS.slice(0, featherCount).reverse().forEach(function (feather) {
-      drawWingFeather(ctx, feather[0], feather[1], feather[2], feather[3]);
-    });
-    D.drawLine(ctx, 0, 0, 72, -15, P.outline, 13);
-    D.drawLine(ctx, 0, 0, 72, -15, WAX, 8);
-    if (wings.isMelting) {
-      drawWaxDrips(ctx, time);
-    }
-    ctx.restore();
-  }
-
-  // Placed like a person: (x, y) is where the wearer's feet are.
-  function drawPairOfWings(ctx, x, y, scale, wings, time) {
-    D.withTransform(ctx, x, y, scale, function () {
-      drawWing(ctx, -1, wings, time);
-      drawWing(ctx, 1, wings, time);
-    });
-  }
-
-  // Like drawPerson, with a pair of wings strapped to the shoulders.
-  function drawWingedPerson(ctx, x, y, scale, look, wings, time) {
-    drawPairOfWings(ctx, x, y, scale, wings, time);
-    person(ctx, x, y, scale, look, wings.pose || 'stand');
-  }
-
-  // On the ground the wings are held up behind the back, so they do not hide the body.
-  function restingWings(pose) {
-    return { flap: 0.9, pose: pose };
-  }
-
-  // A flyer is placed by the chest and leans forward by wings.tilt (radians).
-  function drawFlyer(ctx, x, y, scale, look, wings, time) {
-    ctx.save();
-    ctx.translate(x, y);
-    ctx.rotate(wings.tilt || 0);
-    drawWingedPerson(ctx, 0, CHEST_TO_FEET * scale, scale, look, wings, time);
-    ctx.restore();
-  }
-
-  function flapAt(time, speed) {
-    return 0.25 + 0.35 * Math.sin(time * speed);
-  }
-
-  function drawGull(ctx, x, y, scale, time) {
-    const lift = Math.sin(time * 6 + x) * 10;
-    D.withTransform(ctx, x, y, scale, function () {
-      D.drawOutlinedPolygon(ctx, [[-2, 0], [-28, -12 - lift], [-12, 3]], '#d8dde6', 2);
-      D.drawOutlinedPolygon(ctx, [[2, 0], [28, -12 - lift], [12, 3]], '#d8dde6', 2);
-      D.drawOutlinedEllipse(ctx, 0, 2, 13, 5, P.white, 2);
-      D.drawOutlinedCircle(ctx, 12, -1, 5, P.white, 2);
-      D.drawOutlinedPolygon(ctx, [[16, -2], [24, 0], [16, 2]], P.orange, 1);
-    });
-  }
-
-  // Loose feathers drifting down through `area`, each on its own looping path.
-  function drawFallingFeathers(ctx, area, count, time) {
-    for (let index = 0; index < count; index += 1) {
-      const progress = (time * 0.12 + index / count) % 1;
-      const x = area.x + ((index * 137) % area.width) + Math.sin(time * 2 + index) * 18;
-      const y = area.y + progress * area.height;
-      LM.props.drawFeather(ctx, x, y, 2.2, Math.sin(time * 2.5 + index) * 0.8);
-    }
-  }
+  const { drawPairOfWings, drawWingedPerson, restingWings, drawFlyer, flapAt, drawGull, drawFallingFeathers } = LM.winged;
+  const drawTag = LM.ui.drawTag;
 
   // ---- Landscape pieces ---------------------------------------------------------------------
 
@@ -178,14 +80,6 @@
     D.drawOutlinedEllipse(ctx, x + Math.sin(time) * 3, y - 9, 5, 3.5, '#f0ffe0', 1);
   }
 
-  // A small parchment tag, readable over any background; (x, y) is the text baseline centre.
-  function drawTag(ctx, text, x, y) {
-    const font = LM.text.boldFont(18);
-    const width = LM.text.measureTextWidth(ctx, text, font) + 20;
-    D.drawOutlinedRoundRect(ctx, { x: x - width / 2, y: y - 21, width: width, height: 28 }, 6, P.parchment, 2);
-    LM.text.drawTextLine(ctx, text, x, y, { font: font, color: P.ink, align: 'center' });
-  }
-
   function drawToolTable(ctx, x, y, time) {
     D.drawOutlinedRoundRect(ctx, { x: x - 10, y: y, width: 12, height: 476 - y }, 3, '#7a4a20', 2.5);
     D.drawOutlinedRoundRect(ctx, { x: x + 238, y: y, width: 12, height: 476 - y }, 3, '#7a4a20', 2.5);
@@ -205,49 +99,14 @@
     ctx.restore();
   }
 
-  function drawViewThroughWindow(ctx, frame, time) {
-    ctx.save();
-    ctx.beginPath();
-    ctx.rect(frame.x, frame.y, frame.width, frame.height);
-    ctx.clip();
-    S.drawSky(ctx, { x: frame.x, y: frame.y, width: frame.width, height: 130 }, DAY_SKY.top, DAY_SKY.bottom);
-    S.drawSea(ctx, { x: frame.x, y: frame.y + 130, width: frame.width, height: frame.height - 130 }, time);
-    drawGull(ctx, frame.x + 40 + ((time * 30) % 220), frame.y + 60, 0.9, time);
-    ctx.restore();
-  }
-
-  function drawWorkshopWindow(ctx, time) {
-    const frame = { x: 880, y: 100, width: 300, height: 210 };
-    D.drawOutlinedRoundRect(ctx, { x: frame.x - 14, y: frame.y - 14, width: frame.width + 28, height: frame.height + 28 }, 6, '#7a4a20', 3);
-    drawViewThroughWindow(ctx, frame, time);
-    D.drawLine(ctx, frame.x + frame.width / 2, frame.y, frame.x + frame.width / 2, frame.y + frame.height, '#7a4a20', 10);
-  }
-
-  function drawWaxPot(ctx, x, y, time) {
-    const flicker = Math.sin(time * 12) * 3;
-    D.drawOutlinedPolygon(ctx, [[x - 14, y], [x, y - 26 - flicker], [x + 14, y]], '#ffb030', 1.5);
-    D.drawOutlinedPolygon(ctx, [[x - 34, y - 52], [x + 34, y - 52], [x + 26, y - 14], [x - 26, y - 14]], '#b0603a', 2.5);
-    D.drawOutlinedEllipse(ctx, x, y - 52, 34, 9, WAX, 2.5);
-  }
-
   function drawWorkbench(ctx, time) {
     D.drawOutlinedRoundRect(ctx, { x: 470, y: 400, width: 16, height: 76 }, 3, '#7a4a20', 2.5);
     D.drawOutlinedRoundRect(ctx, { x: 800, y: 400, width: 16, height: 76 }, 3, '#7a4a20', 2.5);
     D.drawOutlinedRoundRect(ctx, { x: 450, y: 384, width: 390, height: 22 }, 4, '#a8743a', 3);
-    drawWaxPot(ctx, 540, 384, time);
+    LM.workshopArt.drawWaxPot(ctx, 540, 384, time);
     [0, 1, 2, 3, 4].forEach(function (index) {
       LM.props.drawFeather(ctx, 640 + index * 34, 372, 2.4, -0.3 + index * 0.15);
     });
-  }
-
-  function drawWorkshop(ctx, time) {
-    D.drawBandedGradient(ctx, { x: 0, y: 0, width: 1280, height: 476 }, '#d0a070', '#8a5a32', 10);
-    ctx.fillStyle = 'rgba(90, 50, 20, 0.35)';
-    for (let plankX = 60; plankX < 1280; plankX += 120) {
-      ctx.fillRect(plankX, 0, 4, 476);
-    }
-    drawWorkshopWindow(ctx, time);
-    D.drawBandedGradient(ctx, { x: 0, y: 476, width: 1280, height: 244 }, '#9a7448', '#6a4a2a', 6);
   }
 
   // ---- Crete, Sicily and Ikaria -------------------------------------------------------------
@@ -358,7 +217,7 @@
       person(ctx, 150, 470, 1.8, looks.icarus, 'stand');
     },
     'ika-workshop': function (ctx, time) {
-      drawWorkshop(ctx, time);
+      LM.workshopArt.drawWorkshop(ctx, time);
       drawPairOfWings(ctx, 650, 340, 1.4, { flap: 0.2 }, time);
       drawWorkbench(ctx, time);
       person(ctx, 330, 490, 2.4, looks.daedalus, 'offer');
