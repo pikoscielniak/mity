@@ -53,10 +53,28 @@
     return hands;
   }
 
+  const DRAPE_COLORS = { veil: '#e8e0f0', hood: '#3a3a4a' };
+
   function drawLongHairBack(ctx, look) {
     if (look.hairStyle === 'long') {
       D.drawOutlinedRoundRect(ctx, { x: -20, y: -110, width: 40, height: 44 }, 14, look.hair, OUTLINE);
     }
+  }
+
+  // A veil or a hood hangs behind the head and shoulders, leaving the face visible.
+  function drawDrapeBack(ctx, look) {
+    const color = DRAPE_COLORS[look.headwear];
+    if (color) {
+      D.drawOutlinedPolygon(ctx, [[-24, -100], [0, -124], [24, -100], [30, -64], [-30, -64]], color, OUTLINE);
+    }
+  }
+
+  function drawDrapeRim(ctx, look) {
+    ctx.beginPath();
+    ctx.arc(0, -98, 21, Math.PI * 1.08, Math.PI * 1.92);
+    ctx.lineWidth = 7;
+    ctx.strokeStyle = DRAPE_COLORS[look.headwear];
+    ctx.stroke();
   }
 
   function drawHairTop(ctx, look) {
@@ -122,8 +140,8 @@
       D.drawOutlinedEllipse(ctx, 0, -110, 22, 6, '#c8a060', 2);
       D.drawOutlinedPolygon(ctx, [[16, -114], [34, -124], [30, -112]], P.white, 1.5);
       D.drawOutlinedPolygon(ctx, [[-16, -114], [-34, -124], [-30, -112]], P.white, 1.5);
-    } else if (look.headwear === 'veil') {
-      D.drawOutlinedPolygon(ctx, [[-20, -104], [0, -120], [20, -104], [26, -66], [-26, -66]], '#e8e0f0', 2);
+    } else if (DRAPE_COLORS[look.headwear]) {
+      drawDrapeRim(ctx, look);
     }
   }
 
@@ -131,6 +149,7 @@
     D.withTransform(ctx, x, y, scale, function () {
       drawCape(ctx, look);
       drawLegs(ctx, look);
+      drawDrapeBack(ctx, look);
       drawLongHairBack(ctx, look);
       drawRobe(ctx, look);
       const hands = drawArms(ctx, look, pose || 'stand');

@@ -262,7 +262,7 @@
       R.drawDangerMeter(ctx, FLYER_X, flyer.y + 70, flyer.wetness, '#3a8ae8', 'pióra mokną!');
       const text = bannerText();
       if (text) {
-        R.drawStoryBanner(ctx, text);
+        LM.ui.drawStoryBanner(ctx, text);
       }
     }
 

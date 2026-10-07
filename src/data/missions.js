@@ -31,7 +31,7 @@
       mapPlaceId: 'thrace',
       themeId: 'underworld',
       songId: 'orpheus',
-      stages: [],
+      stages: ['lyre', 'ascent'],
       questionSlots: { guardian: 6, echo: 4, ending: 2 },
     },
   ];

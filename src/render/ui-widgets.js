@@ -171,6 +171,12 @@
     LM.text.drawTextLine(ctx, text, x, y, { font: font, color: P.ink, align: 'center' });
   }
 
+  // A line or two of story told during a stage, on parchment just above the key-hint bar.
+  function drawStoryBanner(ctx, text) {
+    drawParchmentPanel(ctx, { x: 160, y: 560, width: 960, height: 88 });
+    LM.text.drawWrappedText(ctx, text, 640, 596, 900, { font: LM.text.boldFont(22), color: P.ink, lineHeight: 28, align: 'center' });
+  }
+
   function drawDimmer(ctx) {
     ctx.fillStyle = P.dimmer;
     ctx.fillRect(0, 0, LM.view.WIDTH, LM.view.HEIGHT);
@@ -245,6 +251,7 @@
     drawNumberBadge,
     drawOptionRow,
     drawTag,
+    drawStoryBanner,
     drawDimmer,
     drawTitleText,
     drawMeanderBand,

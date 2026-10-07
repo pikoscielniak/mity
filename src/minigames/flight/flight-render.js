@@ -67,10 +67,5 @@
     LM.ui.drawShadowText(ctx, island.name, island.x, F.SEA_LEVEL - island.height - 18, 24, P.white, 'center');
   }
 
-  function drawStoryBanner(ctx, text) {
-    LM.ui.drawParchmentPanel(ctx, { x: 160, y: 560, width: 960, height: 88 });
-    LM.text.drawWrappedText(ctx, text, 640, 596, 900, { font: LM.text.boldFont(22), color: P.ink, lineHeight: 28, align: 'center' });
-  }
-
-  LM.flightRender = { drawFlightSky, drawZones, drawSeaBelow, drawAltimeter, drawDangerMeter, drawIslandOnHorizon, drawStoryBanner };
+  LM.flightRender = { drawFlightSky, drawZones, drawSeaBelow, drawAltimeter, drawDangerMeter, drawIslandOnHorizon };
 }(window.LM = window.LM || {}));
