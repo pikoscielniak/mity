@@ -21,7 +21,7 @@
       mapPlaceId: 'icaria',
       themeId: 'sky',
       songId: 'icarus',
-      stages: [],
+      stages: ['workshop', 'flight'],
       questionSlots: { workshop: 4, flight: 6, ending: 2 },
     },
     {

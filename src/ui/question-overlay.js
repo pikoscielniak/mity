@@ -15,9 +15,10 @@
     return question.prompt;
   }
 
-  // The views answer with an option index; a true/false question needs a boolean.
-  function toAnswer(question, response) {
-    return question.type === 'truefalse' ? { value: response.optionIndex === 0 } : response;
+  // Choice options are shown in a fresh random order every time, so the right answer is never always first.
+  function shuffledOptionOrder(question, rng) {
+    const indices = question.type === 'choice' ? question.options.map(function (option, index) { return index; }) : [];
+    return LM.random.shuffle(indices, rng);
   }
 
   // request: { question, header, attemptPolicy: 'retryUntilCorrect' | 'singleAttempt', run (or null), rng?, onClosed({ isFirstAttemptCorrect }) }
@@ -30,6 +31,7 @@
     const promptHeight = LM.text.measureWrappedHeight(game.view.ctx, prompt, contentWidth, PROMPT_STYLE);
     const viewTop = PANEL.y + 60 + promptHeight + 20;
     const viewArea = { x: contentX + 20, y: viewTop, width: contentWidth - 40, height: PANEL.y + PANEL.height - viewTop - 20 };
+    const optionOrder = shuffledOptionOrder(question, rng);
     const wrongOptions = [];
     const praise = PRAISE[Math.floor(rng() * PRAISE.length)];
     let firstAttemptCorrect = null;
@@ -43,14 +45,16 @@
       update: update,
       render: render,
       exit: exit,
-      answerWith: function (response) { submit(response); },
+      answerWith: function (questionResponse) { submit(questionResponse); },
+      shownOptionNumber: function (optionIndex) { return optionOrder.indexOf(optionIndex) + 1; },
       isShowingFeedback: function () { return phase === 'feedback'; },
       continueAfterFeedback: function () { continueAfterFeedback(); },
     };
 
     function createView() {
       if (question.type === 'choice') {
-        return LM.choiceView.createChoiceView(question.options, viewArea, wrongOptions, game.sfx);
+        const labels = optionOrder.map(function (index) { return question.options[index]; });
+        return LM.choiceView.createChoiceView(labels, viewArea, wrongOptions, game.sfx);
       }
       if (question.type === 'truefalse') {
         return LM.choiceView.createChoiceView(['Prawda', 'Fałsz'], viewArea, wrongOptions, game.sfx);
@@ -64,21 +68,37 @@
       return LM.typedView.createTypedView(viewArea, game, openHint);
     }
 
-    function submit(response) {
-      const isCorrect = LM.answerCheck.isAnswerCorrect(question, toAnswer(question, response));
+    // Views answer in what they display (a shown option number); the answer check needs the question's terms.
+    function toQuestionResponse(viewResponse) {
+      if (question.type === 'choice') {
+        return { optionIndex: optionOrder[viewResponse.optionIndex] };
+      }
+      if (question.type === 'truefalse') {
+        return { value: viewResponse.optionIndex === 0 };
+      }
+      return viewResponse;
+    }
+
+    function answerFromView(viewResponse) {
+      const isCorrect = submit(toQuestionResponse(viewResponse));
+      if (!isCorrect && viewResponse.optionIndex !== undefined) {
+        wrongOptions.push(viewResponse.optionIndex);
+      }
+    }
+
+    function submit(questionResponse) {
+      const isCorrect = LM.answerCheck.isAnswerCorrect(question, questionResponse);
       if (firstAttemptCorrect === null) {
         firstAttemptCorrect = isCorrect;
         if (request.run) {
           LM.missionRun.recordAnswer(request.run, question, isCorrect);
         }
       }
-      if (!isCorrect && response.optionIndex !== undefined) {
-        wrongOptions.push(response.optionIndex);
-      }
       lastAttemptCorrect = isCorrect;
       view.dispose();
       phase = 'feedback';
       game.sfx(isCorrect ? 'correct' : 'wrong');
+      return isCorrect;
     }
 
     function hintPage() {
@@ -132,9 +152,9 @@
         openHint();
         return;
       }
-      const response = view.update(input);
-      if (response) {
-        submit(response);
+      const viewResponse = view.update(input);
+      if (viewResponse) {
+        answerFromView(viewResponse);
       }
     }
 

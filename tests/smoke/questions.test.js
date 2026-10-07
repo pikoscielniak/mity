@@ -10,14 +10,15 @@ async function press(page, key, times) {
 }
 
 test('every question type can be answered with the keyboard', async function () {
-  const { browser, page, errors } = await openGame({ query: '?scene=questions' });
+  const { browser, page, errors } = await openGame({ query: '?scene=questions&debug=1' });
   try {
     await page.waitForTimeout(300);
     await saveScreenshot(page, 'question-choice');
-    await press(page, 'Digit1');
+    const keys = await page.evaluate(function () { return window.LM_DEBUG.choiceKeys(); });
+    await press(page, keys.wrong);
     await saveScreenshot(page, 'question-choice-wrong');
     await press(page, 'Enter');
-    await press(page, 'Digit2');
+    await press(page, keys.correct);
     await saveScreenshot(page, 'question-choice-correct');
     await press(page, 'Enter');
 

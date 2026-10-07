@@ -15,7 +15,7 @@
   function correctResponse(question) {
     const byType = {
       choice: function () { return { optionIndex: question.correctIndex }; },
-      truefalse: function () { return { optionIndex: question.statementIsTrue ? 0 : 1 }; },
+      truefalse: function () { return { value: question.statementIsTrue }; },
       order: function () { return { items: question.itemsInOrder.slice() }; },
       match: function () { return { pairs: correctPairs(question) }; },
       typed: function () { return { text: question.acceptedAnswers[0] }; },
@@ -26,7 +26,7 @@
   function wrongResponse(question) {
     const byType = {
       choice: function () { return { optionIndex: (question.correctIndex + 1) % question.options.length }; },
-      truefalse: function () { return { optionIndex: question.statementIsTrue ? 1 : 0 }; },
+      truefalse: function () { return { value: !question.statementIsTrue }; },
       order: function () { return { items: question.itemsInOrder.slice().reverse() }; },
       match: function () { return { pairs: {} }; },
       typed: function () { return { text: 'qqq' }; },
@@ -51,11 +51,25 @@
       const overlay = LM.game.scenes.topLayer();
       overlay.answerWith(isCorrect ? correctResponse(overlay.question) : wrongResponse(overlay.question));
     },
+    // The number keys that answer the current choice question right and wrong, as the options are shown.
+    choiceKeys: function () {
+      const overlay = LM.game.scenes.topLayer();
+      const correctIndex = overlay.question.correctIndex;
+      return {
+        correct: 'Digit' + overlay.shownOptionNumber(correctIndex),
+        wrong: 'Digit' + overlay.shownOptionNumber((correctIndex + 1) % overlay.question.options.length),
+      };
+    },
     continueFeedback: function () {
       LM.game.scenes.topLayer().continueAfterFeedback();
     },
     advanceStage: function () {
       LM.game.scenes.currentScene().stage().debugAdvance();
+    },
+    startStage: function (missionId, stageType, seed) {
+      const runner = LM.missionRunner.createMissionRunner(LM.game, missionId, seed || 1);
+      LM.game.currentMission = runner;
+      LM.game.show('stage', { runner: runner, stageType: stageType });
     },
   };
 }(window.LM = window.LM || {}));
