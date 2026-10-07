@@ -1,0 +1,36 @@
+html,
+body {
+  margin: 0;
+  height: 100%;
+  background: #05070f;
+  overflow: hidden;
+}
+
+body {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#game {
+  display: block;
+  touch-action: none;
+}
+
+#answer-input {
+  position: fixed;
+  box-sizing: border-box;
+  border: 3px solid #5a3410;
+  border-radius: 8px;
+  background: #fffdf2;
+  color: #3a2410;
+  font-family: Verdana, Tahoma, sans-serif;
+  font-weight: bold;
+  padding: 0 0.5em;
+  outline: none;
+}
+
+#answer-input:focus {
+  border-color: #2f6fd8;
+  box-shadow: 0 0 0 3px rgba(47, 111, 216, 0.35);
+}

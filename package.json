@@ -1,0 +1,14 @@
+{
+  "name": "labirynt-mitow",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Labirynt Mitów — gra edukacyjna o mitach greckich (statyczny HTML + JS).",
+  "scripts": {
+    "test": "node --test \"tests/unit/**/*.test.js\"",
+    "test:smoke": "node --test --test-concurrency=1 \"tests/smoke/**/*.test.js\"",
+    "build": "node tools/build-single-file.js"
+  },
+  "devDependencies": {
+    "playwright": "1.63.0"
+  }
+}
