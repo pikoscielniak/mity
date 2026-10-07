@@ -32,6 +32,9 @@
     };
     game.onFirstGesture = function () {
       game.audio.unlock();
+      if (game.audio.isReady()) {
+        LM.klattVoice.prepare(game.audio.context());
+      }
       game.playTheme('title');
     };
     return game;
