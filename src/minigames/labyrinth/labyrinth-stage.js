@@ -170,6 +170,7 @@
       keyHints: function () { return [{ keys: ['←', '↑', '↓', '→'], label: 'idź (nić rozwija się za tobą)' }]; },
       restoreCheckpoint: restoreCheckpoint,
       debugAdvance: debugAdvance,
+      heroTile: function () { return hero.tile; },
     };
   }
 
