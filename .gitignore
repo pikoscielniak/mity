@@ -1,5 +1,35 @@
+# Dependencies (only Playwright for the tests)
 node_modules/
-test-results/
+
+# Build output: npm run build writes dist/labirynt-mitow.html
 dist/
+
+# Test screenshots and Playwright reports
+test-results/
+playwright-report/
+coverage/
+
+# Audio renders from tools/render-song.js and tools/render-voice.js
 *.wav
+
+# Logs
+*.log
+npm-debug.log*
+
+# Local Claude Code settings and agent worktrees
 .claude/
+
+# Editors and operating systems
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Local environment files and Python helpers (speech checks with a local ASR)
+.env
+.env.*
+.venv/
+venv/
+__pycache__/
