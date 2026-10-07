@@ -8,7 +8,8 @@
   function silence() {}
 
   // A vertical list of buttons driven by arrows + Enter or the mouse.
-  // items: [{ id, label, isEnabled? }]; layout: { x, y, width, itemHeight, gap, fontSize?, playSound? }
+  // items: [{ id, label, isEnabled? }]
+  // layout: { x, y, width, itemHeight, gap, fontSize?, playSound?, renderItem?(ctx, item, rect, state) }
   function createMenu(items, layout) {
     const playSound = layout.playSound || silence;
     let selectedIndex = Math.max(0, items.findIndex(isEnabled));
@@ -74,9 +75,14 @@
       return index === selectedIndex ? 'selected' : 'normal';
     }
 
+    function drawPlainButton(ctx, item, rect, state) {
+      LM.ui.drawButton(ctx, rect, item.label, state, layout.fontSize);
+    }
+
     function render(ctx) {
+      const drawItem = layout.renderItem || drawPlainButton;
       items.forEach(function (item, index) {
-        LM.ui.drawButton(ctx, itemRect(index), item.label, stateOf(item, index), layout.fontSize);
+        drawItem(ctx, item, itemRect(index), stateOf(item, index));
       });
     }
 
@@ -85,6 +91,7 @@
       render,
       itemRect,
       selectedItem: function () { return items[selectedIndex]; },
+      selectedIndex: function () { return selectedIndex; },
     };
   }
 

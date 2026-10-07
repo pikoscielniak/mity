@@ -150,6 +150,19 @@
     LM.text.drawTextLine(ctx, label, x + 17, y + 25, { font: LM.text.boldFont(20), color: P.ink, align: 'center' });
   }
 
+  // An answer row: button background, a key badge on the left and left-aligned text.
+  function drawOptionRow(ctx, rect, badgeLabel, text, state) {
+    drawButton(ctx, rect, '', state);
+    const textLeft = badgeLabel ? rect.x + 62 : rect.x + 20;
+    if (badgeLabel) {
+      drawNumberBadge(ctx, rect.x + 14, rect.y + (rect.height - 34) / 2, badgeLabel);
+    }
+    const style = { font: LM.text.boldFont(21), color: BUTTON_COLORS[state].text, lineHeight: 26, align: 'left' };
+    const maxWidth = rect.x + rect.width - 18 - textLeft;
+    const textHeight = LM.text.measureWrappedHeight(ctx, text, maxWidth, style);
+    LM.text.drawWrappedText(ctx, text, textLeft, rect.y + (rect.height - textHeight) / 2 + 20, maxWidth, style);
+  }
+
   function drawDimmer(ctx) {
     ctx.fillStyle = P.dimmer;
     ctx.fillRect(0, 0, LM.view.WIDTH, LM.view.HEIGHT);
@@ -222,6 +235,7 @@
     drawTitledPanel,
     drawButton,
     drawNumberBadge,
+    drawOptionRow,
     drawDimmer,
     drawTitleText,
     drawMeanderBand,

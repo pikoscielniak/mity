@@ -31,15 +31,18 @@
       } else if (event.key === 'Escape') {
         event.preventDefault();
         request.onCancel();
+      } else if (event.key === 'Tab') {
+        event.preventDefault();
+        request.onTab();
       }
     }
 
     element.addEventListener('keydown', onKeyDown);
     hostWindow.addEventListener('resize', reposition);
 
-    // rect is in logical (1280×720) coordinates; options: { placeholder, maxLength, onSubmit(text), onCancel() }
+    // rect is in logical (1280×720) coordinates; options: { placeholder, maxLength, onSubmit(text), onCancel(), onTab() }
     function show(rect, options) {
-      request = { rect: rect, onSubmit: options.onSubmit, onCancel: options.onCancel || noop };
+      request = { rect: rect, onSubmit: options.onSubmit, onCancel: options.onCancel || noop, onTab: options.onTab || noop };
       element.value = '';
       element.placeholder = options.placeholder || '';
       element.maxLength = options.maxLength || 40;
