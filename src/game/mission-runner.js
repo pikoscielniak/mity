@@ -46,14 +46,22 @@
       const newAchievements = LM.achievements.awardMissionAchievements(profile, run, isPassed);
       game.persist();
       game.sfx(isPassed ? 'missionComplete' : 'missionFailed');
-      game.show('summary', { runner: runner, isPassed: isPassed, newAchievements: newAchievements });
+      game.show('summary', {
+        scoreTitle: 'Wynik misji',
+        run: run,
+        isPassed: isPassed,
+        newAchievements: newAchievements,
+        concepts: myth.concepts,
+        backgroundIllustration: myth.endingPages[myth.endingPages.length - 1].illustration,
+        choices: isPassed ? [{ label: 'Posłuchaj ballady!', onChoose: showBallad }] : retryChoices(game, retryMission),
+      });
     }
 
-    function afterSummary(isPassed) {
-      if (!isPassed) {
-        game.show('map');
-        return;
-      }
+    function retryMission() {
+      game.startMission(missionId);
+    }
+
+    function showBallad() {
       game.show('song', { songId: mission.songId, onFinished: function () { game.show('map'); } });
     }
 
@@ -74,10 +82,16 @@
         return questionQueues[slot] ? questionQueues[slot].length : 0;
       },
       completeStage: function () { showStage(stageIndex + 1); },
-      afterSummary: afterSummary,
     };
     return runner;
   }
 
-  LM.missionRunner = { createMissionRunner };
+  function retryChoices(game, retry) {
+    return [
+      { label: 'Spróbuj jeszcze raz', onChoose: retry },
+      { label: 'Wróć na mapę', onChoose: function () { game.show('map'); } },
+    ];
+  }
+
+  LM.missionRunner = { createMissionRunner, retryChoices };
 }(window.LM = window.LM || {}));

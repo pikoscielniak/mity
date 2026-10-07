@@ -72,6 +72,24 @@ test('every question is well-formed for its type and has an explanation and a hi
   });
 });
 
+test('cross-myth exam questions are well-formed and point at existing story pages', function () {
+  assert.ok(LM.data.crossQuestions.length >= 6, 'enough questions linking the myths');
+  LM.data.crossQuestions.forEach(function (question) {
+    assert.equal(question.myth, 'cross');
+    TYPE_CHECKS[question.type](question);
+    assert.ok(question.explanation, question.id + ': explanation');
+    assert.ok(LM.stories.findStoryPage(question.hintPageId), question.id + ': hint page ' + question.hintPageId);
+  });
+  const ids = allQuestions.concat(LM.data.crossQuestions).map(function (question) { return question.id; });
+  assert.ok(isDistinct(ids), 'question ids are unique across all pools');
+});
+
+test('the exam pool is big enough to draw from every myth', function () {
+  LM.data.missions.forEach(function (mission) {
+    assert.ok(LM.data.questions[mission.id].length >= LM.data.exam.questionCount, mission.id);
+  });
+});
+
 test('each mission pool can fill every slot at least twice over, so replays differ', function () {
   LM.data.missions.forEach(function (mission) {
     const pool = LM.data.questions[mission.id] || [];

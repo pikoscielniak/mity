@@ -21,7 +21,8 @@
     return LM.random.shuffle(indices, rng);
   }
 
-  // request: { question, header, attemptPolicy: 'retryUntilCorrect' | 'singleAttempt', run (or null), rng?, onClosed({ isFirstAttemptCorrect }) }
+  // request: { question, header, attemptPolicy: 'retryUntilCorrect' | 'singleAttempt', hintPolicy?: 'scrolls' | 'none',
+  //            run (or null), rng?, onClosed({ isFirstAttemptCorrect }) }
   function createQuestionOverlay(game, request) {
     const question = request.question;
     const rng = request.rng || Math.random;
@@ -101,8 +102,10 @@
       return isCorrect;
     }
 
+    // The exam passes hintPolicy 'none': it is a test without scrolls.
     function hintPage() {
-      return request.run && question.hintPageId ? LM.stories.findStoryPage(question.hintPageId) : null;
+      const allowsHints = request.run && request.hintPolicy !== 'none' && question.hintPageId;
+      return allowsHints ? LM.stories.findStoryPage(question.hintPageId) : null;
     }
 
     // One hint per question costs one of the mission's scrolls; reopening the same scroll is free.

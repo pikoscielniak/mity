@@ -21,11 +21,11 @@
     LM.text.drawTextLine(ctx, 'próg 70%', thresholdX, y + 64, { font: LM.text.boldFont(16), color: P.inkSoft, align: 'center' });
   }
 
+  // params: { scoreTitle, run, isPassed, newAchievements, concepts, backgroundIllustration, choices: [{ label, onChoose() }] }
   function createSummaryScene(game, params) {
-    const runner = params.runner;
-    const run = runner.run;
+    const run = params.run;
     const mistakes = LM.missionRun.wrongAnswers(run);
-    const pages = ['score'].concat(mistakes.length > 0 ? ['mistakes'] : [], ['concepts']);
+    const pages = ['score'].concat(mistakes.length > 0 ? ['mistakes'] : [], params.concepts.length > 0 ? ['concepts'] : []);
     let pageIndex = 0;
     let scroll = 0;
     let elapsed = 0;
@@ -78,30 +78,21 @@
     }
 
     function conceptEntries() {
-      return runner.myth.concepts.map(function (concept) { return { title: concept.term, body: concept.definition }; });
+      return params.concepts.map(function (concept) { return { title: concept.term, body: concept.definition }; });
     }
 
-    const PAGE_TITLES = { score: 'Wynik misji', mistakes: 'Twoje błędy i poprawne odpowiedzi', concepts: 'Warto zapamiętać' };
+    const PAGE_TITLES = { score: params.scoreTitle, mistakes: 'Twoje błędy i poprawne odpowiedzi', concepts: 'Warto zapamiętać' };
 
     function isLastPage() {
       return pageIndex === pages.length - 1;
     }
 
     function buildFinalMenu() {
-      const items = params.isPassed ?
-        [{ id: 'song', label: 'Posłuchaj ballady!' }] :
-        [{ id: 'retry', label: 'Spróbuj jeszcze raz' }, { id: 'map', label: 'Wróć na mapę' }];
       const width = 380;
-      const left = 640 - (items.length * (width + 20) - 20) / 2;
-      return items.map(function (item, index) { return Object.assign({ rect: { x: left + index * (width + 20), y: 578, width: width, height: 54 } }, item); });
-    }
-
-    function chooseFinal(item) {
-      if (item.id === 'retry') {
-        game.startMission(runner.mission.id);
-      } else {
-        runner.afterSummary(params.isPassed);
-      }
+      const left = 640 - (params.choices.length * (width + 20) - 20) / 2;
+      return params.choices.map(function (choice, index) {
+        return Object.assign({ rect: { x: left + index * (width + 20), y: 578, width: width, height: 54 } }, choice);
+      });
     }
 
     function updateFinalMenu(input) {
@@ -110,7 +101,7 @@
       }
       const clicked = finalMenu.items.find(function (item) { return input.pointer.wasPressed && LM.ui.isPointInRect(input.pointer, item.rect); });
       if (clicked || input.wasPressed('confirm')) {
-        chooseFinal(clicked || finalMenu.items[finalMenu.selected]);
+        (clicked || finalMenu.items[finalMenu.selected]).onChoose();
       }
     }
 
@@ -146,7 +137,7 @@
     }
 
     function render(ctx) {
-      LM.illustrations[runner.myth.endingPages[runner.myth.endingPages.length - 1].illustration](ctx, elapsed);
+      LM.illustrations[params.backgroundIllustration](ctx, elapsed);
       LM.ui.drawDimmer(ctx);
       const content = LM.ui.drawTitledPanel(ctx, PANEL, PAGE_TITLES[pages[pageIndex]] + '  (' + (pageIndex + 1) + '/' + pages.length + ')');
       if (pages[pageIndex] === 'score') {
