@@ -58,12 +58,12 @@ test('the same seed builds the same labyrinth', function () {
 test('the Minotaur never steps into blocked tiles and only moves to neighbours', function () {
   const maze = LM.maze.generateLabyrinth(LM.random.createRng(5), OPTIONS);
   const rng = LM.random.createRng(11);
-  const blocked = new Set(maze.doors.map(LM.minotaurBrain.tileKey).concat([LM.minotaurBrain.tileKey(maze.entrance)]));
+  const blocked = new Set(maze.doors.map(LM.maze.tileKey).concat([LM.maze.tileKey(maze.entrance)]));
   let previous = null;
   let current = LM.minotaurBrain.pickDistantRoom(maze, maze.entrance, rng);
   for (let step = 0; step < 500; step += 1) {
     const next = LM.minotaurBrain.chooseNextTile(maze, current, previous, blocked, rng);
-    assert.ok(!blocked.has(LM.minotaurBrain.tileKey(next)));
+    assert.ok(!blocked.has(LM.maze.tileKey(next)));
     assert.ok(Math.abs(next.x - current.x) + Math.abs(next.y - current.y) <= 1);
     previous = current;
     current = next;

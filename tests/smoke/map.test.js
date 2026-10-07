@@ -14,7 +14,7 @@ test('the map sails to an open mission, refuses a locked one and opens the menu 
     await page.evaluate(function () {
       const profile = LM.profiles.createProfile(LM.game.save, 'Jaś', 'boy', 'now');
       LM.profiles.recordMissionResult(profile, { missionId: 'theseus', percent: 83, isPassed: true, dateIso: new Date().toISOString() });
-      LM.achievements.awardMissionAchievements(profile, LM.missionRun.createMissionRun('theseus'), true);
+      LM.achievements.awardAchievements(profile, LM.missionRun.createMissionRun('theseus'), true);
       LM.game.show('map');
     });
     await page.waitForTimeout(300);

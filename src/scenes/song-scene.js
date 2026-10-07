@@ -16,21 +16,23 @@
     let playback = null;
     let elapsed = 0;
     let wasHeardToTheEnd = false;
+    let isOnScreen = true;
     let earnedAchievements = [];
 
     function startSinging() {
       game.music.stop(0.4);
+      // The worklet may still be loading; if the player has left by then, the song must not start.
       LM.klattVoice.prepare(game.audio.context()).then(function () {
-        playback = LM.songPlayer.playSong(game.audio, song);
+        if (isOnScreen) {
+          playback = LM.songPlayer.playSong(game.audio, song);
+        }
       });
     }
 
     function recordHeardToTheEnd() {
       const profile = game.profile();
       LM.profiles.recordBalladHeard(profile, params.songId);
-      earnedAchievements = LM.achievements.awardAchievements(profile, {
-        run: LM.missionRun.createMissionRun('jukebox'), isPassed: false, profile: profile,
-      });
+      earnedAchievements = LM.achievements.awardAchievements(profile, null, false);
       game.persist();
     }
 
@@ -67,6 +69,7 @@
       update: update,
       render: render,
       exit: function () {
+        isOnScreen = false;
         if (playback) {
           playback.stop();
         }

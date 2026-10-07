@@ -29,7 +29,6 @@
     let cursor = 0;
     let bubbleText = 'Pomóż mi zrobić skrzydła! Podaj mi dwie rzeczy, z których je zbuduję.';
     let feathers = null;
-    let isWaiting = false;
     let doneSeconds = 0;
     let elapsed = 0;
 
@@ -44,11 +43,7 @@
     }
 
     function askThen(header, next) {
-      isWaiting = true;
-      context.askQuestion('workshop', { header: header }, function () {
-        isWaiting = false;
-        next();
-      });
+      context.askQuestion('workshop', { header: header }, next);
     }
 
     function handMaterial(material) {
@@ -68,7 +63,7 @@
     }
 
     function updateMaterials(input) {
-      const step = (input.wasPressed('right') ? 1 : 0) - (input.wasPressed('left') ? 1 : 0);
+      const step = input.pressedStep('left', 'right');
       cursor = (cursor + step + materials.length) % materials.length;
       const pressed = input.pressedOptionIndex();
       const clicked = input.pointer.wasPressed ? materials.findIndex(function (material, index) { return LM.ui.isPointInRect(input.pointer, cardRect(index)); }) : -1;
@@ -99,9 +94,6 @@
 
     function update(dt, input) {
       elapsed += dt;
-      if (isWaiting) {
-        return;
-      }
       if (phase === 'materials') {
         updateMaterials(input);
       } else if (phase === 'feathers' && feathers.update(input)) {

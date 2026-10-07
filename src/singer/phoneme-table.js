@@ -39,7 +39,6 @@
   const HISS_S = hiss(6500, 2.5, 0.55);
   const HISS_SH = hiss(3000, 1.6, 0.55);
   const HISS_SJ = hiss(4500, 2, 0.55);
-  const HISS_F = hiss(5000, 0.8, 0.25);
   const HISS_X = hiss(1600, 1, 0.3);
 
   function voicedHiss(voiceless) {

@@ -40,10 +40,10 @@
     element.addEventListener('keydown', onKeyDown);
     hostWindow.addEventListener('resize', reposition);
 
-    // rect is in logical (1280×720) coordinates; options: { placeholder, maxLength, onSubmit(text), onCancel(), onTab() }
+    // rect is in logical (1280×720) coordinates; options: { initialText, placeholder, maxLength, onSubmit(text), onCancel(), onTab() }
     function show(rect, options) {
       request = { rect: rect, onSubmit: options.onSubmit, onCancel: options.onCancel || noop, onTab: options.onTab || noop };
-      element.value = '';
+      element.value = options.initialText || '';
       element.placeholder = options.placeholder || '';
       element.maxLength = options.maxLength || 40;
       element.hidden = false;
@@ -68,7 +68,7 @@
       show,
       hide,
       keepFocus,
-      isVisible: function () { return request !== null; },
+      currentText: function () { return element.value; },
     };
   }
 

@@ -105,7 +105,6 @@
   }
 
   LM.winged = {
-    WING_FEATHER_COUNT: WING_FEATHERS.length,
     drawPairOfWings,
     drawWingedPerson,
     restingWings,

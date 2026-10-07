@@ -39,5 +39,4 @@
   }
 
   LM.sceneFactories.title = createTitleScene;
-  LM.titleArt = { drawGameTitle };
 }(window.LM = window.LM || {}));

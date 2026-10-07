@@ -33,7 +33,6 @@
     let nextTemptation = 0;
     let warning = null;
     let stepClock = 0;
-    let isQuestionOpen = false;
     let elapsed = 0;
 
     function enterPhase(nextPhase) {
@@ -43,9 +42,7 @@
 
     function startTemptation(entry) {
       temptation = { entry: entry, seconds: TEMPTATION_SECONDS };
-      if (game.profile().settings.isNarrationEnabled) {
-        game.speech.speak(entry.text, entry.speaker);
-      }
+      game.narrate(entry.text, entry.speaker);
     }
 
     function lookBack() {
@@ -56,10 +53,8 @@
     }
 
     function askEcho(echo) {
-      isQuestionOpen = true;
       const number = echoes.indexOf(echo) + 1;
       context.askQuestion('echo', { header: 'Echo w ciemności ' + number + '/' + echoes.length }, function () {
-        isQuestionOpen = false;
         echo.state = 'answered';
         checkpoint = echo.distance;
       });
@@ -86,10 +81,7 @@
     }
 
     function updateTemptation(dt) {
-      if (temptation) {
-        temptation.seconds -= dt;
-        temptation = temptation.seconds > 0 ? temptation : null;
-      }
+      temptation = LM.timed.tick(temptation, dt);
       const due = TEMPTATIONS[nextTemptation];
       if (due && distance >= due.at) {
         nextTemptation += 1;
@@ -108,11 +100,8 @@
     function update(dt, input) {
       elapsed += dt;
       phaseSeconds += dt;
-      if (warning) {
-        warning.seconds -= dt;
-        warning = warning.seconds > 0 ? warning : null;
-      }
-      if (phase === 'climbing' && !isQuestionOpen) {
+      warning = LM.timed.tick(warning, dt);
+      if (phase === 'climbing') {
         if (input.wasPressed('left')) {
           lookBack();
         }
@@ -160,8 +149,7 @@
 
     function render(ctx) {
       if (phase === 'lament' || phase === 'lamentQuestions') {
-        A.drawThraceAtDusk(ctx, elapsed);
-        LM.characters.drawPerson(ctx, 640, 520, 2.2, LM.characters.looks.orpheus, 'mourn');
+        LM.illustrations['thrace-lament'](ctx, elapsed);
         LM.ui.drawStoryBanner(ctx, LAMENT_STORY);
         return;
       }
@@ -173,6 +161,13 @@
       } else if (temptation) {
         drawTemptation(ctx);
       }
+    }
+
+    function keyHints() {
+      if (phase !== 'climbing') {
+        return [];
+      }
+      return [{ keys: ['→'], label: 'idź w górę (trzymaj)' }, { keys: ['←'], label: 'tego nie naciskaj: obejrzenie się!' }];
     }
 
     function debugAdvance() {
@@ -194,7 +189,7 @@
       update: update,
       render: render,
       hud: function () { return { title: 'Droga z podziemi', rightText: 'Do wyjścia: ' + Math.max(0, Math.round(EXIT_DISTANCE - distance)) + ' kroków' }; },
-      keyHints: function () { return [{ keys: ['→'], label: 'idź w górę (trzymaj)' }, { keys: ['←'], label: 'tego nie naciskaj: obejrzenie się!' }]; },
+      keyHints: keyHints,
       restoreCheckpoint: function () { distance = checkpoint; },
       debugAdvance: debugAdvance,
     };

@@ -90,6 +90,7 @@
       context: function () { return context; },
       bus: function (name) { return buses[name]; },
       isReady: function () { return context !== null; },
+      isMuted: function () { return isMuted; },
       volume: function (name) { return volumes[name]; },
     };
   }

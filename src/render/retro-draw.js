@@ -15,15 +15,30 @@
     return 'rgb(' + mixed.join(',') + ')';
   }
 
+  const bandColorCache = new Map();
+
+  // The palette is small and fixed, so each gradient's band colours are worked out once.
+  function bandColors(topColor, bottomColor, bandCount) {
+    const key = topColor + '|' + bottomColor + '|' + bandCount;
+    if (!bandColorCache.has(key)) {
+      const colors = [];
+      for (let band = 0; band < bandCount; band += 1) {
+        colors.push(mixColors(topColor, bottomColor, bandCount > 1 ? band / (bandCount - 1) : 0));
+      }
+      bandColorCache.set(key, colors);
+    }
+    return bandColorCache.get(key);
+  }
+
   // Visible colour steps instead of a smooth gradient: the signature of early colour phone screens.
   function drawBandedGradient(ctx, rect, topColor, bottomColor, bandCount) {
+    const colors = bandColors(topColor, bottomColor, bandCount);
     for (let band = 0; band < bandCount; band += 1) {
-      const amount = bandCount > 1 ? band / (bandCount - 1) : 0;
       const bandTop = rect.y + Math.floor(rect.height * band / bandCount);
       const bandBottom = rect.y + Math.floor(rect.height * (band + 1) / bandCount);
       // Overlap the next band by a pixel, otherwise scaled canvases show hairline seams between bands.
       const overlap = band < bandCount - 1 ? 1 : 0;
-      ctx.fillStyle = mixColors(topColor, bottomColor, amount);
+      ctx.fillStyle = colors[band];
       ctx.fillRect(rect.x, bandTop, rect.width, bandBottom - bandTop + overlap);
     }
   }

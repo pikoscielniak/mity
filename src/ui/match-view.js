@@ -142,12 +142,18 @@
       });
     }
 
+    function submitButtonState() {
+      if (!isComplete()) {
+        return 'disabled';
+      }
+      return cursor.column === SUBMIT ? 'selected' : 'normal';
+    }
+
     function render(ctx) {
       drawLinks(ctx);
       lefts.forEach(function (text, index) { drawItem(ctx, LEFT, index, text); });
       rights.forEach(function (text, index) { drawItem(ctx, RIGHT, index, text); });
-      const submitState = isComplete() ? (cursor.column === SUBMIT ? 'selected' : 'normal') : 'disabled';
-      LM.ui.drawButton(ctx, submitRect(), 'Sprawdź pary', submitState, 22);
+      LM.ui.drawButton(ctx, submitRect(), 'Sprawdź pary', submitButtonState(), 22);
     }
 
     return {

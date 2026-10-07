@@ -12,9 +12,8 @@
   }
 
   function createExamScene(game) {
-    const seed = game.options.seed ? Number(game.options.seed) : LM.random.randomSeed();
-    const rng = LM.random.createRng(seed);
-    const run = LM.missionRun.createMissionRun(LM.data.exam.id);
+    const rng = LM.random.createRng(game.newSeed());
+    const run = LM.missionRun.createMissionRun(LM.data.exam.id, 0);
     const questions = drawExam(rng);
     const introText = game.say('Witaj w Delfach, ' + game.profile().name + '! Jestem Pytia, kapłanka wyroczni. Zadam ci ' +
       questions.length + ' pytań o trzech mitach, bez zwojów z podpowiedziami. Aby zdać, odpowiedz dobrze na ' +
@@ -24,20 +23,12 @@
     let elapsed = 0;
 
     function finish() {
-      const profile = game.profile();
-      const isPassed = LM.missionRun.isPassed(run);
-      LM.profiles.recordMissionResult(profile, { missionId: run.missionId, percent: LM.missionRun.scorePercent(run), isPassed: isPassed, dateIso: new Date().toISOString() });
-      const newAchievements = LM.achievements.awardMissionAchievements(profile, run, isPassed);
-      game.persist();
-      game.sfx(isPassed ? 'missionComplete' : 'missionFailed');
-      game.show('summary', {
+      LM.missionRunner.finishRun(game, run, {
         scoreTitle: 'Wynik egzaminu',
-        run: run,
-        isPassed: isPassed,
-        newAchievements: newAchievements,
         concepts: [],
         backgroundIllustration: 'delphi',
-        choices: isPassed ? [{ label: 'Zobacz zakończenie!', onChoose: function () { game.show('ending'); } }] : LM.missionRunner.retryChoices(game, game.startExam),
+        choiceWhenPassed: { label: 'Zobacz zakończenie!', onChoose: function () { game.show('ending'); } },
+        retry: game.startExam,
       });
     }
 
@@ -50,7 +41,6 @@
         question: questions[questionIndex],
         header: 'Wyrocznia w Delfach · pytanie ' + (questionIndex + 1) + '/' + questions.length,
         attemptPolicy: 'singleAttempt',
-        hintPolicy: 'none',
         run: run,
         rng: rng,
         onClosed: function () {
@@ -82,13 +72,10 @@
     return {
       enter: function () {
         game.playTheme('exam');
-        if (game.profile().settings.isNarrationEnabled) {
-          game.speech.speak(introText, 'pythia');
-        }
+        game.narrate(introText, 'pythia');
       },
       update: update,
       render: render,
-      exit: function () { game.speech.cancel(); },
     };
   }
 

@@ -5,8 +5,9 @@
   const PASS_THRESHOLD = 0.7;
   const HINTS_PER_MISSION = 3;
 
-  function createMissionRun(missionId) {
-    return { missionId: missionId, answers: [], hintsUsed: 0, heartsLost: 0, stats: {}, wasStorySkipped: false };
+  // hintBudget: how many hint scrolls this attempt may open (the exam allows none).
+  function createMissionRun(missionId, hintBudget = HINTS_PER_MISSION) {
+    return { missionId: missionId, answers: [], hintBudget: hintBudget, hintsUsed: 0, heartsLost: 0, stats: {} };
   }
 
   // Only the first attempt counts; retries after a mistake are for learning.
@@ -18,7 +19,7 @@
   }
 
   function hintsLeft(run) {
-    return HINTS_PER_MISSION - run.hintsUsed;
+    return run.hintBudget - run.hintsUsed;
   }
 
   function recordHintUse(run) {

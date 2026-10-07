@@ -21,8 +21,7 @@
     }
   }
 
-  function createSettingsScene(game, params) {
-    const returnTo = params.returnTo || 'map';
+  function createSettingsScene(game) {
     const settings = game.profile().settings;
     let elapsed = 0;
     const items = [
@@ -53,7 +52,7 @@
 
     function leave() {
       game.persist();
-      game.show(returnTo);
+      game.show('map');
     }
 
     function update(dt, input) {

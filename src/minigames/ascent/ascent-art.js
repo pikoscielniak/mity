@@ -68,12 +68,5 @@
     LM.text.drawTextLine(ctx, state === 'answered' ? '✔' : '?', x, y - 29, { font: LM.text.boldFont(24), color: '#e8f0ff', align: 'center' });
   }
 
-  function drawThraceAtDusk(ctx, time) {
-    LM.scenery.drawSky(ctx, { x: 0, y: 56, width: 1280, height: 420 }, '#3a3a7a', '#f0a070');
-    LM.scenery.drawSun(ctx, 980, 430, 50, time);
-    D.drawOutlinedPolygon(ctx, [[0, 720], [0, 420], [260, 360], [520, 430], [780, 380], [1040, 440], [1280, 400], [1280, 720]], '#4a5a3a', 3);
-    D.drawBandedGradient(ctx, { x: 0, y: 520, width: 1280, height: 200 }, '#5a6a3a', '#3a4a2a', 6);
-  }
-
-  LM.ascentArt = { HERO_SCREEN_X, groundY, screenX, drawTunnel, drawEchoStone, drawThraceAtDusk };
+  LM.ascentArt = { HERO_SCREEN_X, groundY, screenX, drawTunnel, drawEchoStone };
 }(window.LM = window.LM || {}));

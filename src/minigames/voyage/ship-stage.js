@@ -11,7 +11,7 @@
   const PROGRESS_PER_SECOND = 3.4;
   const STEER_SPEED = 260;
   const ROCK_SPEED = 250;
-  const SAFE_SECONDS_AFTER_HIT = 1.6;
+  const LANE_MIDDLE = (LANE_TOP + LANE_BOTTOM) / 2;
   const STOPS = [
     { at: 50, name: 'Naksos', header: 'Postój na wyspie Naksos', hasTemple: false },
     { at: 100, name: 'Ateny', header: 'Na horyzoncie Ateny', hasTemple: true },
@@ -20,12 +20,11 @@
   function createShipStage(context) {
     const game = context.game;
     let progress = 0;
-    let shipY = (LANE_TOP + LANE_BOTTOM) / 2;
+    let shipY = LANE_MIDDLE;
     let rocks = [];
     let nextRockIn = 1.5;
     let stopIndex = 0;
     let phase = 'sailing';
-    let safeSeconds = 0;
     let checkpointProgress = 0;
     let elapsed = 0;
 
@@ -49,17 +48,16 @@
       rocks.forEach(function (rock) { rock.x -= ROCK_SPEED * dt; });
       rocks = rocks.filter(function (rock) { return rock.x > -80; });
       const hit = rocks.find(function (rock) { return Math.abs(rock.x - SHIP_X) < 70 && Math.abs(rock.y - shipY) < rock.size + 12; });
-      if (hit && safeSeconds <= 0) {
+      if (hit && !context.isRecovering()) {
         rocks = rocks.filter(function (rock) { return rock !== hit; });
         game.sfx('splash');
         context.loseHeart();
-        safeSeconds = SAFE_SECONDS_AFTER_HIT;
       }
     }
 
     function sail(dt, input) {
       progress = Math.min(STOPS[stopIndex].at, progress + PROGRESS_PER_SECOND * dt);
-      const steer = (input.isHeld('down') ? 1 : 0) - (input.isHeld('up') ? 1 : 0);
+      const steer = input.heldStep('up', 'down');
       shipY = Math.min(LANE_BOTTOM, Math.max(LANE_TOP, shipY + steer * STEER_SPEED * dt));
       nextRockIn -= dt;
       if (nextRockIn <= 0 && STOPS[stopIndex].at - progress > 6) {
@@ -73,7 +71,6 @@
 
     function update(dt, input) {
       elapsed += dt;
-      safeSeconds = Math.max(0, safeSeconds - dt);
       if (phase === 'sailing') {
         sail(dt, input);
       } else if (phase === 'home') {
@@ -119,8 +116,7 @@
       STOPS.forEach(function (stop) { drawStopIsland(ctx, stop); });
       LM.scenery.drawSea(ctx, { x: 0, y: SEA_TOP, width: 1280, height: 720 - SEA_TOP }, elapsed * 3);
       rocks.forEach(function (rock) { drawRock(ctx, rock); });
-      const isBlinking = safeSeconds > 0 && Math.floor(elapsed * 10) % 2 === 0;
-      if (!isBlinking) {
+      if (!context.isBlinking()) {
         LM.scenery.drawShip(ctx, SHIP_X, shipY + 20, 0.85, '#1a1a1a', elapsed);
       }
       drawRouteBar(ctx);
@@ -129,7 +125,7 @@
     function restoreCheckpoint() {
       progress = checkpointProgress;
       rocks = [];
-      shipY = (LANE_TOP + LANE_BOTTOM) / 2;
+      shipY = LANE_MIDDLE;
     }
 
     function debugAdvance() {

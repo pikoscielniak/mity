@@ -15,7 +15,7 @@
   function profileLabel(profile) {
     const passed = profile.progress.passedMissions.length;
     const examMark = profile.progress.isExamPassed ? '  ★' : '';
-    return profile.name + '  ·  misje ' + passed + '/3' + examMark;
+    return profile.name + '  ·  misje ' + passed + '/' + LM.data.missions.length + examMark;
   }
 
   function createProfilesScene(game) {

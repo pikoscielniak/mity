@@ -1,9 +1,11 @@
-// Plays music themes: { id, bpm, loop, tracks: [{ instrument, notes, velocity?, octaveShift? }] }.
+// Plays music themes: { id, bpm, loop, tracks: [{ instrument, notes, velocity? }] }.
 (function (LM) {
   'use strict';
 
-  const LOOP_SCHEDULE_AHEAD_SECONDS = 1.5;
-  const LOOP_CHECK_MS = 250;
+  const LOOKAHEAD_SECONDS = 0.6;
+  const SCHEDULER_TICK_MS = 100;
+  const DEFAULT_VELOCITY = 0.8;
+  const timelineCache = new WeakMap();
 
   function secondsPerBeat(theme) {
     return 60 / theme.bpm;
@@ -15,35 +17,59 @@
     }));
   }
 
-  function scheduleTrack(context, destination, track, startTime, beatSeconds) {
-    const playNote = LM.instruments[track.instrument];
-    const velocity = track.velocity || 0.8;
+  function trackNotes(track) {
+    const notes = [];
     let beat = 0;
     LM.notes.parseNoteString(track.notes).forEach(function (note) {
       if (note.midi !== null) {
-        const frequency = LM.notes.midiToFrequency(note.midi);
-        playNote(context, destination, frequency, startTime + beat * beatSeconds, note.beats * beatSeconds, velocity);
+        notes.push({ beat: beat, beats: note.beats, frequency: LM.notes.midiToFrequency(note.midi), instrument: track.instrument, velocity: track.velocity || DEFAULT_VELOCITY });
       }
       beat += note.beats;
     });
+    return notes;
   }
 
-  // Schedules one pass of the whole theme; returns when it ends. Also used for offline rendering in tests.
+  // All notes of all tracks, sorted by when they start (worked out once per theme).
+  function themeTimeline(theme) {
+    if (!timelineCache.has(theme)) {
+      const notes = theme.tracks.reduce(function (all, track) { return all.concat(trackNotes(track)); }, []);
+      notes.sort(function (first, second) { return first.beat - second.beat; });
+      timelineCache.set(theme, notes);
+    }
+    return timelineCache.get(theme);
+  }
+
+  function playNote(context, destination, note, startTime, beatSeconds) {
+    LM.instruments[note.instrument](context, destination, note.frequency, startTime + note.beat * beatSeconds, note.beats * beatSeconds, note.velocity);
+  }
+
+  // Schedules one whole pass at once; returns when it ends. Used for jingles, ballads and offline rendering.
   function scheduleThemeOnce(context, destination, theme, startTime) {
     const beatSeconds = secondsPerBeat(theme);
-    theme.tracks.forEach(function (track) {
-      scheduleTrack(context, destination, track, startTime, beatSeconds);
-    });
+    themeTimeline(theme).forEach(function (note) { playNote(context, destination, note, startTime, beatSeconds); });
     return startTime + themeLengthBeats(theme) * beatSeconds;
   }
 
+  // Background music is scheduled a little ahead at a time, so a long loop never creates hundreds of nodes at once.
   function createMusicPlayer(hub) {
     let current = null;
 
-    function scheduleNextPassIfDue(playing) {
-      const context = hub.context();
-      if (context.currentTime > playing.nextPassTime - LOOP_SCHEDULE_AHEAD_SECONDS) {
-        playing.nextPassTime = scheduleThemeOnce(context, playing.gain, playing.theme, playing.nextPassTime);
+    function scheduleDueNotes(playing) {
+      const horizon = hub.context().currentTime + LOOKAHEAD_SECONDS;
+      while (playing.timeline.length > 0) {
+        if (playing.cursor >= playing.timeline.length) {
+          if (!playing.theme.loop) {
+            return;
+          }
+          playing.passStart += playing.passSeconds;
+          playing.cursor = 0;
+        }
+        const note = playing.timeline[playing.cursor];
+        if (playing.passStart + note.beat * playing.beatSeconds > horizon) {
+          return;
+        }
+        playNote(hub.context(), playing.gain, note, playing.passStart, playing.beatSeconds);
+        playing.cursor += 1;
       }
     }
 
@@ -54,8 +80,7 @@
       const playing = current;
       current = null;
       window.clearInterval(playing.timer);
-      const context = hub.context();
-      playing.gain.gain.setTargetAtTime(0, context.currentTime, Math.max(fadeSeconds, 0.01) / 3);
+      playing.gain.gain.setTargetAtTime(0, hub.context().currentTime, Math.max(fadeSeconds, 0.01) / 3);
       window.setTimeout(function () { playing.gain.disconnect(); }, fadeSeconds * 1000 + 300);
     }
 
@@ -67,11 +92,13 @@
       const context = hub.context();
       const gain = context.createGain();
       gain.connect(hub.bus('music'));
-      const playing = { theme: theme, gain: gain, timer: null, nextPassTime: context.currentTime + 0.1 };
-      playing.nextPassTime = scheduleThemeOnce(context, gain, theme, playing.nextPassTime);
-      if (theme.loop) {
-        playing.timer = window.setInterval(function () { scheduleNextPassIfDue(playing); }, LOOP_CHECK_MS);
-      }
+      const beatSeconds = secondsPerBeat(theme);
+      const playing = {
+        theme: theme, gain: gain, timeline: themeTimeline(theme), cursor: 0,
+        beatSeconds: beatSeconds, passSeconds: themeLengthBeats(theme) * beatSeconds, passStart: context.currentTime + 0.1,
+      };
+      scheduleDueNotes(playing);
+      playing.timer = window.setInterval(function () { scheduleDueNotes(playing); }, SCHEDULER_TICK_MS);
       current = playing;
     }
 
@@ -82,5 +109,5 @@
     };
   }
 
-  LM.music = { scheduleThemeOnce, themeLengthBeats, createMusicPlayer };
+  LM.music = { scheduleThemeOnce, createMusicPlayer };
 }(window.LM = window.LM || {}));

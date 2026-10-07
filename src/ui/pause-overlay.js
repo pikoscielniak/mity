@@ -1,29 +1,20 @@
-// Pause during a stage: continue, toggle sound or narration, or leave the mission.
+// Pause during a stage: continue, mute or unmute all sound, or leave the mission.
 (function (LM) {
   'use strict';
 
   function createPauseOverlay(game) {
-    const settings = game.profile().settings;
     let isConfirmingExit = false;
     const items = [
       { id: 'resume', label: 'Graj dalej' },
       { id: 'sound', label: '' },
-      { id: 'exit', label: 'Przerwij misję' },
+      { id: 'exit', label: '' },
     ];
     const menu = LM.menu.createMenu(items, { x: 440, y: 270, width: 400, itemHeight: 56, gap: 14, fontSize: 22, playSound: game.sfx });
     const overlay = { kind: 'pause', update: update, render: render };
 
     function refreshLabels() {
-      items[1].label = settings.musicVolume > 0 || settings.sfxVolume > 0 ? 'Wycisz dźwięki' : 'Włącz dźwięki';
+      items[1].label = game.audio.isMuted() ? 'Włącz dźwięki' : 'Wycisz dźwięki';
       items[2].label = isConfirmingExit ? 'Na pewno? Postęp misji przepadnie' : 'Przerwij misję';
-    }
-
-    function toggleSound() {
-      const shouldMute = settings.musicVolume > 0 || settings.sfxVolume > 0;
-      settings.musicVolume = shouldMute ? 0 : 0.55;
-      settings.sfxVolume = shouldMute ? 0 : 0.8;
-      game.applySettings();
-      game.persist();
     }
 
     function update(dt, input) {
@@ -31,7 +22,7 @@
       if ((chosen && chosen.id === 'resume') || input.wasPressed('back')) {
         game.scenes.popOverlay(overlay);
       } else if (chosen && chosen.id === 'sound') {
-        toggleSound();
+        game.audio.setMuted(!game.audio.isMuted());
       } else if (chosen && chosen.id === 'exit' && isConfirmingExit) {
         game.show('map');
       } else if (chosen && chosen.id === 'exit') {

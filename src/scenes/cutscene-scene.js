@@ -12,12 +12,10 @@
     const width = TEXT_PANEL.width - 56;
     let budget = Math.floor(letterCount);
     LM.text.wrapText(ctx, fullText, width, TEXT_STYLE.font).forEach(function (line, index) {
-      const letters = Array.from(line);
       if (budget > 0) {
-        const visible = letters.slice(0, budget).join('');
-        LM.text.drawTextLine(ctx, visible, TEXT_PANEL.x + 28, TEXT_PANEL.y + 44 + index * TEXT_STYLE.lineHeight, TEXT_STYLE);
+        LM.text.drawTextLine(ctx, line.slice(0, budget), TEXT_PANEL.x + 28, TEXT_PANEL.y + 44 + index * TEXT_STYLE.lineHeight, TEXT_STYLE);
       }
-      budget -= letters.length + 1;
+      budget -= line.length + 1;
     });
   }
 
@@ -34,44 +32,35 @@
     let pageIndex = 0;
     let elapsed = 0;
     let lettersShown = 0;
-
-    function pageText() {
-      return game.say(pages[pageIndex].text);
-    }
+    let shownText = '';
 
     function showPage(index) {
       pageIndex = index;
       lettersShown = 0;
-      if (game.profile().settings.isNarrationEnabled) {
-        game.speech.speak(pageText(), pages[pageIndex].speaker);
-      }
-    }
-
-    function finish(wasSkipped) {
-      game.speech.cancel();
-      params.onFinished(wasSkipped);
+      shownText = game.say(pages[pageIndex].text);
+      game.narrate(shownText, pages[pageIndex].speaker);
     }
 
     function isPageFullyShown() {
-      return lettersShown >= pageText().length;
+      return lettersShown >= shownText.length;
     }
 
     function goForward() {
       if (!isPageFullyShown()) {
-        lettersShown = pageText().length;
+        lettersShown = shownText.length;
       } else if (pageIndex < pages.length - 1) {
         game.sfx('page');
         showPage(pageIndex + 1);
       } else {
-        finish(false);
+        params.onFinished(false);
       }
     }
 
     function update(dt, input) {
       elapsed += dt;
-      lettersShown = Math.min(pageText().length, lettersShown + dt * LETTERS_PER_SECOND);
+      lettersShown = Math.min(shownText.length, lettersShown + dt * LETTERS_PER_SECOND);
       if (input.wasPressed('back')) {
-        finish(true);
+        params.onFinished(true);
       } else if (input.wasPressed('left') && pageIndex > 0) {
         game.sfx('page');
         showPage(pageIndex - 1);
@@ -88,7 +77,7 @@
       if (speaker && speaker.label) {
         drawSpeakerLabel(ctx, speaker.label);
       }
-      drawTypedText(ctx, pageText(), lettersShown);
+      drawTypedText(ctx, shownText, lettersShown);
       LM.ui.drawKeyHintBar(ctx, [
         { keys: ['Enter'], label: 'dalej' },
         { keys: ['←'], label: 'wstecz' },
@@ -100,7 +89,6 @@
       enter: function () { showPage(0); },
       update: update,
       render: render,
-      exit: function () { game.speech.cancel(); },
     };
   }
 

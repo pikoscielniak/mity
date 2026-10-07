@@ -50,14 +50,16 @@
       burnTorch(dt);
     }
 
+    function torchShare() {
+      return Math.max(0, torchLeft / torchSeconds);
+    }
+
     function lightRadius() {
-      return MIN_LIGHT + (MAX_LIGHT - MIN_LIGHT) * Math.max(0, torchLeft / torchSeconds);
+      return MIN_LIGHT + (MAX_LIGHT - MIN_LIGHT) * torchShare();
     }
 
     function drawTorchMeter(ctx) {
-      const share = Math.max(0, torchLeft / torchSeconds);
-      LM.draw.drawOutlinedRoundRect(ctx, { x: 980, y: 70, width: 260, height: 22 }, 8, '#3a2a1a', 2);
-      LM.draw.drawBandedGradient(ctx, { x: 983, y: 73, width: 254 * share, height: 16 }, '#fff0a0', '#ff8a20', 3);
+      LM.ui.drawMeter(ctx, { x: 980, y: 70, width: 260, height: 22 }, torchShare(), '#ff9a2a');
       LM.ui.drawShadowText(ctx, 'Pochodnia', 970, 88, 18, LM.palette.white, 'right');
     }
 
@@ -65,7 +67,7 @@
       const R = LM.labyrinthRender;
       R.drawMaze(ctx, maze, layout);
       const heroPoint = R.tileCenter(layout, W.position(hero));
-      R.drawHeroFromAbove(ctx, heroPoint, hero.facing, false);
+      R.drawHeroFromAbove(ctx, heroPoint, hero.facing);
       R.drawDarkness(ctx, heroPoint, lightRadius() + Math.sin(elapsed * 9) * 4);
       R.drawThread(ctx, layout, thread, null);
       drawTorchMeter(ctx);

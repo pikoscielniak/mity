@@ -20,7 +20,7 @@
         if ((chosen && chosen.id === 'close') || input.wasPressed('back')) {
           game.scenes.popOverlay(overlay);
         } else if (chosen) {
-          game.show(chosen.id, { returnTo: 'map' });
+          game.show(chosen.id);
         }
       },
       render: function (ctx) {

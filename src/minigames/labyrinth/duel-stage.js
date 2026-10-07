@@ -49,22 +49,23 @@
       context.askQuestion('duel', { header: 'Pojedynek z Minotaurem · runda ' + round + '/' + rounds, attemptPolicy: 'singleAttempt' }, onAnswered);
     }
 
-    function finishDodge(isDodged) {
-      if (isDodged) {
-        heroOffset = dodgeDirection === 'left' ? -150 : 150;
-        game.sfx('choose');
-      } else {
-        context.loseHeart();
-      }
-      enterPhase('afterCharge', isDodged ? 'Unik!' : 'Ała! Minotaur cię trącił.');
+    function dodge() {
+      heroOffset = dodgeDirection === 'left' ? -150 : 150;
+      game.sfx('choose');
+      enterPhase('afterCharge', 'Unik!');
+    }
+
+    function takeChargeHit() {
+      context.loseHeart();
+      enterPhase('afterCharge', 'Ała! Minotaur cię trącił.');
     }
 
     function updateCharge(input) {
       const pressedSide = ['left', 'right'].find(function (side) { return input.wasPressed(side); });
-      if (pressedSide) {
-        finishDodge(pressedSide === dodgeDirection);
-      } else if (phaseTime > DODGE_WINDOW_SECONDS) {
-        finishDodge(false);
+      if (pressedSide === dodgeDirection) {
+        dodge();
+      } else if (pressedSide || phaseTime > DODGE_WINDOW_SECONDS) {
+        takeChargeHit();
       }
     }
 
@@ -145,7 +146,7 @@
 
     function debugAdvance() {
       if (phase === 'charge') {
-        finishDodge(true);
+        dodge();
       } else if (phase === 'intro') {
         startCharge();
       } else if (phase === 'finale') {

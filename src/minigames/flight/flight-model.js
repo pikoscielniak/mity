@@ -7,6 +7,7 @@
   const HOT_LIMIT = 210;
   const WET_LIMIT = 500;
   const SEA_LEVEL = 600;
+  const SAFE_MIDDLE_Y = (HOT_LIMIT + WET_LIMIT) / 2;
   const CLIMB_SPEED = 230;
   const RESPONSIVENESS = 6;
   const SECONDS_TO_MELT = 2.6;
@@ -38,16 +39,16 @@
     flyer.wetness = zone === 'tooLow' ? flyer.wetness + dt / SECONDS_TO_SOAK : Math.max(0, flyer.wetness - dt * RECOVERY_RATE);
     if (flyer.wax >= 1) {
       flyer.wax = 0;
-      flyer.y = (HOT_LIMIT + WET_LIMIT) / 2;
+      flyer.y = SAFE_MIDDLE_Y;
       return 'waxMelted';
     }
     if (flyer.wetness >= 1) {
       flyer.wetness = 0;
-      flyer.y = (HOT_LIMIT + WET_LIMIT) / 2;
+      flyer.y = SAFE_MIDDLE_Y;
       return 'feathersSoaked';
     }
     return null;
   }
 
-  LM.flightModel = { SKY_TOP, HOT_LIMIT, WET_LIMIT, SEA_LEVEL, createFlyer, altitudeZone, steerFlyer, updateDangers };
+  LM.flightModel = { SKY_TOP, HOT_LIMIT, WET_LIMIT, SEA_LEVEL, SAFE_MIDDLE_Y, createFlyer, altitudeZone, steerFlyer, updateDangers };
 }(window.LM = window.LM || {}));

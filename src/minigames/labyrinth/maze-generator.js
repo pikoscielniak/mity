@@ -11,25 +11,29 @@
     return Array.from({ length: height }, function () { return new Array(width).fill(WALL); });
   }
 
+  function tileKey(tile) {
+    return tile.x + ',' + tile.y;
+  }
+
   function sameTile(first, second) {
     return first.x === second.x && first.y === second.y;
   }
 
   // Iterative recursive-backtracker: walk to a random unvisited neighbour room, knocking down the wall between.
   function carveRooms(tiles, cellColumns, cellRows, startCell, rng) {
-    const visited = new Set([startCell.x + ',' + startCell.y]);
+    const visited = new Set([tileKey(startCell)]);
     const stack = [startCell];
     tiles[startCell.y * 2 + 1][startCell.x * 2 + 1] = FLOOR;
     while (stack.length > 0) {
       const cell = stack[stack.length - 1];
       const options = LM.random.shuffle(STEPS, rng).map(function (step) { return { x: cell.x + step[0], y: cell.y + step[1] }; })
-        .filter(function (next) { return next.x >= 0 && next.y >= 0 && next.x < cellColumns && next.y < cellRows && !visited.has(next.x + ',' + next.y); });
+        .filter(function (next) { return next.x >= 0 && next.y >= 0 && next.x < cellColumns && next.y < cellRows && !visited.has(tileKey(next)); });
       if (options.length === 0) {
         stack.pop();
         continue;
       }
       const next = options[0];
-      visited.add(next.x + ',' + next.y);
+      visited.add(tileKey(next));
       tiles[next.y * 2 + 1][next.x * 2 + 1] = FLOOR;
       tiles[cell.y + next.y + 1][cell.x + next.x + 1] = FLOOR;
       stack.push(next);
@@ -47,7 +51,7 @@
 
   // Breadth-first search; returns the tiles from start to goal inclusive.
   function findPath(maze, start, goal) {
-    const cameFrom = new Map([[start.x + ',' + start.y, null]]);
+    const cameFrom = new Map([[tileKey(start), null]]);
     const queue = [start];
     while (queue.length > 0) {
       const tile = queue.shift();
@@ -55,7 +59,7 @@
         break;
       }
       neighbours(maze, tile).forEach(function (next) {
-        const key = next.x + ',' + next.y;
+        const key = tileKey(next);
         if (!cameFrom.has(key)) {
           cameFrom.set(key, tile);
           queue.push(next);
@@ -63,7 +67,7 @@
       });
     }
     const path = [];
-    for (let tile = goal; tile; tile = cameFrom.get(tile.x + ',' + tile.y)) {
+    for (let tile = goal; tile; tile = cameFrom.get(tileKey(tile))) {
       path.unshift(tile);
     }
     return path;
@@ -106,5 +110,5 @@
     return maze;
   }
 
-  LM.maze = { WALL, FLOOR, generateLabyrinth, findPath, neighbours, isWalkable, sameTile };
+  LM.maze = { WALL, FLOOR, tileKey, generateLabyrinth, findPath, neighbours, isWalkable, sameTile };
 }(window.LM = window.LM || {}));

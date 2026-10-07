@@ -30,6 +30,11 @@
     game.playTheme = function (themeId) {
       game.music.play(LM.data.themes[themeId]);
     };
+    game.narrate = function (text, speakerId) {
+      if (game.profile().settings.isNarrationEnabled) {
+        game.speech.speak(text, speakerId);
+      }
+    };
     game.onFirstGesture = function () {
       game.audio.unlock();
       if (game.audio.isReady()) {
@@ -70,14 +75,19 @@
       options: readUrlOptions(),
     };
     game.scenes = LM.sceneManager.createSceneManager(game);
+    // Leaving a scene silences its narration, which also brings the ducked music back.
     game.show = function (sceneName, params) {
+      game.speech.cancel();
       const scene = LM.sceneFactories[sceneName](game, params || {});
       scene.sceneName = sceneName;
       game.scenes.replaceScene(scene);
     };
+    // ?seed= replays the same question draw (debugging and tests); otherwise every attempt draws anew.
+    game.newSeed = function () {
+      return game.options.seed ? Number(game.options.seed) : LM.random.randomSeed();
+    };
     game.startMission = function (missionId) {
-      const seed = game.options.seed ? Number(game.options.seed) : LM.random.randomSeed();
-      game.currentMission = LM.missionRunner.createMissionRunner(game, missionId, seed);
+      game.currentMission = LM.missionRunner.createMissionRunner(game, missionId, game.newSeed());
       game.currentMission.start();
     };
     game.startExam = function () {

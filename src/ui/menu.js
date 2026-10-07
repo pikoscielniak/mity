@@ -89,9 +89,7 @@
     return {
       update,
       render,
-      itemRect,
       selectedItem: function () { return items[selectedIndex]; },
-      selectedIndex: function () { return selectedIndex; },
     };
   }
 

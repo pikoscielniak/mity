@@ -6,26 +6,9 @@
   const CARD_GAP = 10;
   const NUMBER_COLUMN = 52;
 
-  function swap(items, first, second) {
-    const temporary = items[first];
-    items[first] = items[second];
-    items[second] = temporary;
-  }
-
-  function shuffledOutOfOrder(itemsInOrder, rng) {
-    let cards = itemsInOrder.slice();
-    for (let tries = 0; tries < 10; tries += 1) {
-      cards = LM.random.shuffle(itemsInOrder, rng);
-      if (cards.some(function (item, index) { return item !== itemsInOrder[index]; })) {
-        break;
-      }
-    }
-    return cards;
-  }
-
   // Responds with { items } in the order the player arranged them.
   function createOrderView(itemsInOrder, area, rng, playSound) {
-    const cards = shuffledOutOfOrder(itemsInOrder, rng);
+    const cards = LM.random.shuffledOutOfOrder(itemsInOrder, rng);
     const submitIndex = cards.length;
     let cursor = 0;
     let heldIndex = null;
@@ -48,7 +31,7 @@
       if (target < 0 || target >= cards.length) {
         return;
       }
-      swap(cards, heldIndex, target);
+      LM.random.swap(cards, heldIndex, target);
       heldIndex = target;
       cursor = target;
       playSound('move');
@@ -65,7 +48,7 @@
     }
 
     function updateKeyboard(input) {
-      const step = (input.wasPressed('down') ? 1 : 0) - (input.wasPressed('up') ? 1 : 0);
+      const step = input.pressedStep('up', 'down');
       if (step !== 0 && heldIndex !== null) {
         moveHeldCard(step);
       } else if (step !== 0) {

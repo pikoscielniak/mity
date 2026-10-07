@@ -21,8 +21,7 @@
     return LM.random.shuffle(indices, rng);
   }
 
-  // request: { question, header, attemptPolicy: 'retryUntilCorrect' | 'singleAttempt', hintPolicy?: 'scrolls' | 'none',
-  //            run (or null), rng?, onClosed({ isFirstAttemptCorrect }) }
+  // request: { question, header, attemptPolicy: 'retryUntilCorrect' | 'singleAttempt', run (or null), rng?, onClosed({ isFirstAttemptCorrect }) }
   function createQuestionOverlay(game, request) {
     const question = request.question;
     const rng = request.rng || Math.random;
@@ -46,6 +45,8 @@
       update: update,
       render: render,
       exit: exit,
+      cover: function () { forwardToView('cover'); },
+      uncover: function () { forwardToView('uncover'); },
       answerWith: function (questionResponse) { submit(questionResponse); },
       shownOptionNumber: function (optionIndex) { return optionOrder.indexOf(optionIndex) + 1; },
       isShowingFeedback: function () { return phase === 'feedback'; },
@@ -102,16 +103,19 @@
       return isCorrect;
     }
 
-    // The exam passes hintPolicy 'none': it is a test without scrolls.
-    function hintPage() {
-      const allowsHints = request.run && request.hintPolicy !== 'none' && question.hintPageId;
-      return allowsHints ? LM.stories.findStoryPage(question.hintPageId) : null;
+    // Only the typed view owns something outside the canvas (its text field), so only it reacts to cover/uncover.
+    function forwardToView(method) {
+      if (view && view[method]) {
+        view[method]();
+      }
     }
+
+    const allowsHints = Boolean(request.run && request.run.hintBudget > 0 && question.hintPageId);
+    const hintPage = allowsHints ? LM.stories.findStoryPage(question.hintPageId) : null;
 
     // One hint per question costs one of the mission's scrolls; reopening the same scroll is free.
     function openHint() {
-      const page = hintPage();
-      if (!page || (!hintWasUsed && LM.missionRun.hintsLeft(request.run) <= 0)) {
+      if (!hintPage || (!hintWasUsed && LM.missionRun.hintsLeft(request.run) <= 0)) {
         game.sfx('back');
         return;
       }
@@ -119,10 +123,8 @@
         LM.missionRun.recordHintUse(request.run);
         hintWasUsed = true;
       }
-      view.dispose();
-      phase = 'reopenAfterHint';
       game.sfx('page');
-      game.scenes.pushOverlay(LM.hintScroll.createHintScrollOverlay(game, page, LM.missionRun.hintsLeft(request.run)));
+      game.scenes.pushOverlay(LM.hintScroll.createHintScrollOverlay(game, hintPage, LM.missionRun.hintsLeft(request.run)));
     }
 
     function close() {
@@ -140,11 +142,6 @@
     }
 
     function update(dt, input) {
-      if (phase === 'reopenAfterHint') {
-        view = createView();
-        phase = 'asking';
-        return;
-      }
       if (phase === 'feedback') {
         if (input.wasPressed('confirm') || input.pointer.wasPressed) {
           continueAfterFeedback();
@@ -189,16 +186,13 @@
         return [{ keys: ['Enter'], label: 'dalej' }];
       }
       const hints = view.keyHints.slice();
-      if (hintPage()) {
+      if (hintPage) {
         hints.push({ keys: [question.type === 'typed' ? 'Tab' : 'H'], label: 'zwój (' + LM.missionRun.hintsLeft(request.run) + ')' });
       }
       return hints;
     }
 
     function render(ctx) {
-      if (phase === 'reopenAfterHint') {
-        return;
-      }
       LM.ui.drawDimmer(ctx);
       LM.ui.drawTitledPanel(ctx, PANEL, request.header);
       LM.text.drawWrappedText(ctx, prompt, contentX, PANEL.y + 88, contentWidth, PROMPT_STYLE);

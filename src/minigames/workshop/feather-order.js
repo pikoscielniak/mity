@@ -17,23 +17,15 @@
     return SLOT_LEFT + index * SLOT_SPACING;
   }
 
-  function swap(items, first, second) {
-    const temporary = items[first];
-    items[first] = items[second];
-    items[second] = temporary;
-  }
-
+  // lengths: shortest first, which is also the order the player has to restore.
   function createFeatherRow(lengths, rng, playSound) {
-    let order = lengths.slice();
-    while (isAscending(order)) {
-      order = LM.random.shuffle(lengths, rng);
-    }
+    const order = LM.random.shuffledOutOfOrder(lengths, rng);
     const row = { order: order, cursor: 0, heldIndex: null };
 
     function moveHeld(step) {
       const target = row.heldIndex + step;
       if (target >= 0 && target < order.length) {
-        swap(order, row.heldIndex, target);
+        LM.random.swap(order, row.heldIndex, target);
         row.heldIndex = target;
         row.cursor = target;
         playSound('move');
@@ -50,7 +42,7 @@
       if (row.heldIndex === null) {
         row.heldIndex = index;
       } else {
-        swap(order, row.heldIndex, index);
+        LM.random.swap(order, row.heldIndex, index);
         row.heldIndex = null;
       }
       row.cursor = index;
@@ -58,7 +50,7 @@
     }
 
     function updateKeyboard(input) {
-      const step = (input.wasPressed('right') ? 1 : 0) - (input.wasPressed('left') ? 1 : 0);
+      const step = input.pressedStep('left', 'right');
       if (step !== 0 && row.heldIndex !== null) {
         moveHeld(step);
       } else if (step !== 0) {
@@ -110,5 +102,5 @@
     }
   }
 
-  LM.featherOrder = { createFeatherRow, drawWingFrame, isAscending };
+  LM.featherOrder = { createFeatherRow, drawWingFrame };
 }(window.LM = window.LM || {}));

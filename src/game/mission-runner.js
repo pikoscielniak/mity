@@ -24,7 +24,6 @@
         title: 'Misja ' + mission.number + ': ' + mission.title,
         pages: myth.storyPages,
         onFinished: function (wasSkipped) {
-          run.wasStorySkipped = wasSkipped;
           if (!wasSkipped) {
             LM.profiles.recordStoryHeard(game.profile(), missionId);
           }
@@ -38,27 +37,13 @@
     }
 
     function showSummary() {
-      const profile = game.profile();
-      const isPassed = LM.missionRun.isPassed(run);
-      LM.profiles.recordMissionResult(profile, {
-        missionId: missionId, percent: LM.missionRun.scorePercent(run), isPassed: isPassed, dateIso: new Date().toISOString(),
-      });
-      const newAchievements = LM.achievements.awardMissionAchievements(profile, run, isPassed);
-      game.persist();
-      game.sfx(isPassed ? 'missionComplete' : 'missionFailed');
-      game.show('summary', {
+      finishRun(game, run, {
         scoreTitle: 'Wynik misji',
-        run: run,
-        isPassed: isPassed,
-        newAchievements: newAchievements,
         concepts: myth.concepts,
         backgroundIllustration: myth.endingPages[myth.endingPages.length - 1].illustration,
-        choices: isPassed ? [{ label: 'Posłuchaj ballady!', onChoose: showBallad }] : retryChoices(game, retryMission),
+        choiceWhenPassed: { label: 'Posłuchaj ballady!', onChoose: showBallad },
+        retry: function () { game.startMission(missionId); },
       });
-    }
-
-    function retryMission() {
-      game.startMission(missionId);
     }
 
     function showBallad() {
@@ -93,5 +78,27 @@
     ];
   }
 
-  LM.missionRunner = { createMissionRunner, retryChoices };
+  // Ends an attempt (a mission or the exam): saves the result and new achievements, then shows the summary.
+  // summary: { scoreTitle, concepts, backgroundIllustration, choiceWhenPassed, retry() }
+  function finishRun(game, run, summary) {
+    const profile = game.profile();
+    const isPassed = LM.missionRun.isPassed(run);
+    LM.profiles.recordMissionResult(profile, {
+      missionId: run.missionId, percent: LM.missionRun.scorePercent(run), isPassed: isPassed, dateIso: new Date().toISOString(),
+    });
+    const newAchievements = LM.achievements.awardAchievements(profile, run, isPassed);
+    game.persist();
+    game.sfx(isPassed ? 'missionComplete' : 'missionFailed');
+    game.show('summary', {
+      scoreTitle: summary.scoreTitle,
+      run: run,
+      isPassed: isPassed,
+      newAchievements: newAchievements,
+      concepts: summary.concepts,
+      backgroundIllustration: summary.backgroundIllustration,
+      choices: isPassed ? [summary.choiceWhenPassed] : retryChoices(game, summary.retry),
+    });
+  }
+
+  LM.missionRunner = { createMissionRunner, finishRun };
 }(window.LM = window.LM || {}));

@@ -9,7 +9,6 @@
   const FLYER_X = 330;
   const TOUCH_DISTANCE = 52;
   const SCROLL_INTERVAL = 7;
-  const SAFE_SECONDS_AFTER_HIT = 1.6;
   const SCRIPTED_SECONDS = { climb: 4, fall: 3.2, arrive: 2.6 };
   const ICARUS_ISLANDS = [
     { afterScroll: 2, name: 'Samos', width: 300, height: 90 },
@@ -33,7 +32,7 @@
   function createFlightStage(context) {
     const game = context.game;
     const rng = context.rng;
-    const flyer = F.createFlyer((F.HOT_LIMIT + F.WET_LIMIT) / 2);
+    const flyer = F.createFlyer(F.SAFE_MIDDLE_Y);
     const legs = {
       icarus: { slot: 'flight', look: LM.characters.looks.icarus, islands: ICARUS_ISLANDS, total: Math.min(6, context.remainingQuestions('flight')) },
       daedalus: { slot: 'ending', look: LM.characters.looks.daedalus, islands: DAEDALUS_ISLANDS, total: Math.min(2, context.remainingQuestions('ending')) },
@@ -48,7 +47,6 @@
     let sinceScroll = 0;
     let nextGullIn = 3;
     let nextFeatherIn = 1.5;
-    let safeSeconds = 0;
     let warning = null;
     let elapsed = 0;
 
@@ -67,7 +65,7 @@
         scrollsCaught = 0;
         sinceScroll = SCROLL_INTERVAL - 2;
         islands = [];
-        flyer.y = (F.HOT_LIMIT + F.WET_LIMIT) / 2;
+        flyer.y = F.SAFE_MIDDLE_Y;
         showIslandsAfter(0);
       }
     }
@@ -79,12 +77,11 @@
     }
 
     function hurt(message) {
-      if (safeSeconds > 0) {
+      if (context.isRecovering()) {
         return;
       }
       warning = { text: message, seconds: 2 };
       context.loseHeart();
-      safeSeconds = SAFE_SECONDS_AFTER_HIT;
     }
 
     function spawnTraffic(dt) {
@@ -137,7 +134,7 @@
     function updateScroll(dt) {
       sinceScroll += dt;
       if (!scroll && scrollsCaught < leg().total && sinceScroll >= SCROLL_INTERVAL) {
-        scroll = { x: 1340, y: (F.HOT_LIMIT + F.WET_LIMIT) / 2 };
+        scroll = { x: 1340, y: F.SAFE_MIDDLE_Y };
       }
       if (!scroll) {
         return;
@@ -161,7 +158,7 @@
     }
 
     function fly(dt, input) {
-      const steer = (input.isHeld('down') ? 1 : 0) - (input.isHeld('up') ? 1 : 0);
+      const steer = input.heldStep('up', 'down');
       F.steerFlyer(flyer, steer, dt);
       const danger = F.updateDangers(flyer, dt);
       if (danger === 'waxMelted') {
@@ -201,11 +198,7 @@
     function update(dt, input) {
       elapsed += dt;
       phaseSeconds += dt;
-      safeSeconds = Math.max(0, safeSeconds - dt);
-      if (warning) {
-        warning.seconds -= dt;
-        warning = warning.seconds > 0 ? warning : null;
-      }
+      warning = LM.timed.tick(warning, dt);
       if (isPlayerFlying()) {
         fly(dt, input);
       } else {
@@ -222,12 +215,11 @@
     }
 
     function drawFlyers(ctx) {
-      const isBlinking = safeSeconds > 0 && Math.floor(elapsed * 10) % 2 === 0;
       const heroLook = phase === 'daedalus' || phase === 'arrive' ? legs.daedalus.look : legs.icarus.look;
       if (phase === 'icarus' || phase === 'climb' || phase === 'fall') {
         LM.winged.drawFlyer(ctx, 700, 300 + Math.sin(elapsed * 1.5) * 18, 0.65, legs.daedalus.look, { flap: LM.winged.flapAt(elapsed, 3), tilt: 0.3 }, elapsed);
       }
-      if (!isBlinking) {
+      if (!context.isBlinking()) {
         LM.winged.drawFlyer(ctx, FLYER_X, flyer.y, 0.75, heroLook, heroWings(), elapsed);
       }
       if (phase === 'climb' || phase === 'fall') {
@@ -267,7 +259,7 @@
     }
 
     function restoreCheckpoint() {
-      flyer.y = (F.HOT_LIMIT + F.WET_LIMIT) / 2;
+      flyer.y = F.SAFE_MIDDLE_Y;
       flyer.wax = 0;
       flyer.wetness = 0;
       gulls = [];

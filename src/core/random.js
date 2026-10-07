@@ -16,13 +16,28 @@
     return Math.floor(Math.random() * 4294967296);
   }
 
+  function swap(items, first, second) {
+    const temporary = items[first];
+    items[first] = items[second];
+    items[second] = temporary;
+  }
+
   function shuffle(items, rng) {
     const shuffled = items.slice();
     for (let index = shuffled.length - 1; index > 0; index -= 1) {
-      const swapIndex = Math.floor(rng() * (index + 1));
-      const temporary = shuffled[index];
-      shuffled[index] = shuffled[swapIndex];
-      shuffled[swapIndex] = temporary;
+      swap(shuffled, index, Math.floor(rng() * (index + 1)));
+    }
+    return shuffled;
+  }
+
+  // A shuffle that is not already in the right order, so an ordering puzzle never starts solved.
+  function shuffledOutOfOrder(itemsInOrder, rng) {
+    let shuffled = itemsInOrder.slice();
+    for (let tries = 0; tries < 10; tries += 1) {
+      shuffled = shuffle(itemsInOrder, rng);
+      if (shuffled.some(function (item, index) { return item !== itemsInOrder[index]; })) {
+        break;
+      }
     }
     return shuffled;
   }
@@ -31,9 +46,5 @@
     return shuffle(items, rng).slice(0, count);
   }
 
-  function randomBetween(min, max, rng) {
-    return min + (max - min) * rng();
-  }
-
-  LM.random = { createRng, randomSeed, shuffle, pickSome, randomBetween };
+  LM.random = { createRng, randomSeed, swap, shuffle, shuffledOutOfOrder, pickSome };
 }(window.LM = window.LM || {}));

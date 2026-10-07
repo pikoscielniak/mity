@@ -14,28 +14,40 @@
     return required.every(function (item) { return list.indexOf(item) >= 0; });
   }
 
-  const MISSION_IDS = ['theseus', 'icarus', 'orpheus'];
+  function missionIds() {
+    return LM.data.missions.map(function (mission) { return mission.id; });
+  }
 
-  // facts: { run, isPassed, profile }
+  // There is no run when a ballad ends in the jukebox; such facts are never passed, so the run is not read.
+  function passed(facts, missionId) {
+    return facts.isPassed && facts.run.missionId === missionId;
+  }
+
+  function passedWithNone(missionId, statName) {
+    return function (facts) { return passed(facts, missionId) && stat(facts.run, statName) === 0; };
+  }
+
+  // facts: { run (or null), isPassed, profile }
   const RULES = {
-    flawlessMission: function (facts) { return facts.run.missionId !== 'exam' && isFlawless(facts.run); },
+    flawlessMission: function (facts) { return facts.isPassed && facts.run.missionId !== 'exam' && isFlawless(facts.run); },
     noHints: function (facts) { return facts.isPassed && facts.run.hintsUsed === 0; },
-    untouchedByMinotaur: function (facts) { return facts.isPassed && facts.run.missionId === 'theseus' && stat(facts.run, 'minotaurTouches') === 0; },
-    escapeWithoutLoss: function (facts) { return facts.isPassed && facts.run.missionId === 'theseus' && stat(facts.run, 'escapeHeartsLost') === 0; },
-    stayedInGoldenMean: function (facts) { return facts.isPassed && facts.run.missionId === 'icarus' && stat(facts.run, 'secondsOutsideZone') === 0; },
+    untouchedByMinotaur: passedWithNone('theseus', 'minotaurTouches'),
+    escapeWithoutLoss: passedWithNone('theseus', 'escapeHeartsLost'),
+    stayedInGoldenMean: passedWithNone('icarus', 'secondsOutsideZone'),
     collectedAllFeathers: function (facts) {
-      return facts.isPassed && facts.run.missionId === 'icarus' && stat(facts.run, 'feathersTotal') > 0 && stat(facts.run, 'feathersCollected') === stat(facts.run, 'feathersTotal');
+      return passed(facts, 'icarus') && stat(facts.run, 'feathersTotal') > 0 && stat(facts.run, 'feathersCollected') === stat(facts.run, 'feathersTotal');
     },
-    playedEveryNote: function (facts) { return facts.isPassed && facts.run.missionId === 'orpheus' && stat(facts.run, 'notesMissed') === 0; },
-    neverLookedBack: function (facts) { return facts.isPassed && facts.run.missionId === 'orpheus' && stat(facts.run, 'lookBacks') === 0; },
-    heardEveryStory: function (facts) { return hasAll(facts.profile.storiesHeard, MISSION_IDS); },
-    heardEveryBallad: function (facts) { return hasAll(facts.profile.balladsHeard, MISSION_IDS); },
-    passedExam: function (facts) { return facts.isPassed && facts.run.missionId === 'exam'; },
-    flawlessExam: function (facts) { return facts.run.missionId === 'exam' && isFlawless(facts.run); },
+    playedEveryNote: passedWithNone('orpheus', 'notesMissed'),
+    neverLookedBack: passedWithNone('orpheus', 'lookBacks'),
+    heardEveryStory: function (facts) { return hasAll(facts.profile.storiesHeard, missionIds()); },
+    heardEveryBallad: function (facts) { return hasAll(facts.profile.balladsHeard, missionIds()); },
+    passedExam: function (facts) { return passed(facts, 'exam'); },
+    flawlessExam: function (facts) { return passed(facts, 'exam') && isFlawless(facts.run); },
   };
 
-  // Awards every achievement whose rule now holds; returns the newly earned ones.
-  function awardAchievements(profile, facts) {
+  // Awards every achievement whose rule now holds; returns the newly earned ones. run is null outside an attempt.
+  function awardAchievements(profile, run, isPassed) {
+    const facts = { run: run, isPassed: isPassed, profile: profile };
     const earned = LM.data.achievements.filter(function (achievement) {
       return !profile.achievements[achievement.id] && RULES[achievement.rule](facts);
     });
@@ -43,9 +55,5 @@
     return earned;
   }
 
-  function awardMissionAchievements(profile, run, isPassed) {
-    return awardAchievements(profile, { run: run, isPassed: isPassed, profile: profile });
-  }
-
-  LM.achievements = { RULES, awardAchievements, awardMissionAchievements };
+  LM.achievements = { awardAchievements };
 }(window.LM = window.LM || {}));

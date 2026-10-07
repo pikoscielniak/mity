@@ -141,19 +141,18 @@
     return { karaokeLine: karaokeLine, endTime: time };
   }
 
-  function syllableEvents(plan, nextPlan) {
-    let events = [];
+  // Appends the events of one sung syllable to `events`.
+  function addSyllableEvents(events, plan, nextPlan) {
     plan.pitches.forEach(function (pitch) {
       events.push(glideTo(pitch.time, 'pitch', LM.notes.midiToFrequency(pitch.midi), 0.012));
     });
     LM.phonemeTiming.planSyllableSegments(plan.symbols, plan.start, plan.end).forEach(function (segment) {
-      events = events.concat(segmentEvents(segment));
+      events.push.apply(events, segmentEvents(segment));
     });
     const isFollowedByRest = !nextPlan || nextPlan.start > plan.end + 0.001;
     if (isFollowedByRest) {
-      events = events.concat(silenceEvents(plan.end));
+      events.push.apply(events, silenceEvents(plan.end));
     }
-    return events;
   }
 
   // song: { bpm, introBeats, verses: [{ lines: [{ lyrics, notes }] }] }
@@ -169,13 +168,13 @@
         time = placed.endTime;
       });
     });
-    let events = silenceEvents(startTime);
+    const events = silenceEvents(startTime);
     syllablePlans.forEach(function (plan, index) {
-      events = events.concat(syllableEvents(plan, syllablePlans[index + 1]));
+      addSyllableEvents(events, plan, syllablePlans[index + 1]);
     });
     events.sort(function (first, second) { return first.time - second.time; });
     return { events: events, karaoke: karaoke, endTime: time };
   }
 
-  LM.voiceAutomation = { planSong, lineAlignmentProblem, segmentEvents };
+  LM.voiceAutomation = { planSong, lineAlignmentProblem };
 }(window.LM = window.LM || {}));

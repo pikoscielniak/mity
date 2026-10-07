@@ -8,7 +8,6 @@
   const HERO_SPEED = 5.5;
   const MINOTAUR_SPEED = 1.9;
   const TOUCH_DISTANCE = 0.7;
-  const SAFE_SECONDS_AFTER_TOUCH = 1.8;
   const LIGHT_RADIUS = 175;
   const FOOTSTEP_HEARING_TILES = 6;
 
@@ -27,19 +26,18 @@
     const game = context.game;
     const maze = sharedLabyrinth(context.runner);
     const layout = LM.labyrinthRender.layoutFor(maze);
-    const sealedDoors = new Set(maze.doors.map(LM.minotaurBrain.tileKey));
+    const sealedDoors = new Set(maze.doors.map(LM.maze.tileKey));
+    const closedToMinotaur = new Set(Array.from(sealedDoors).concat([LM.maze.tileKey(maze.entrance)]));
     const hero = W.createWalker(maze.entrance, HERO_SPEED);
     const minotaur = W.createWalker(LM.minotaurBrain.pickDistantRoom(maze, maze.entrance, context.rng), MINOTAUR_SPEED);
     const readDirection = W.createDirectionReader();
     let thread = [maze.entrance];
     let checkpoint = { tile: maze.entrance, thread: thread.slice() };
     let minotaurPrevious = null;
-    let safeSeconds = 0;
-    let isQuestionOpen = false;
     let elapsed = 0;
 
-    function blockedForMinotaur() {
-      return new Set(Array.from(sealedDoors).concat([LM.minotaurBrain.tileKey(maze.entrance)]));
+    function isSealed(tile) {
+      return sealedDoors.has(LM.maze.tileKey(tile));
     }
 
     function windThread(target) {
@@ -52,14 +50,13 @@
     }
 
     function openDoor(doorKey) {
-      isQuestionOpen = false;
       sealedDoors.delete(doorKey);
+      closedToMinotaur.delete(doorKey);
       game.sfx('door');
       checkpoint = { tile: hero.tile, thread: thread.slice() };
     }
 
     function askDoorQuestion(doorKey) {
-      isQuestionOpen = true;
       const doorNumber = maze.doors.length - sealedDoors.size + 1;
       context.askQuestion('door', { header: 'Pieczęć Minosa ' + doorNumber + '/' + maze.doors.length }, function () { openDoor(doorKey); });
     }
@@ -71,7 +68,7 @@
 
     function tryStep(direction) {
       const target = W.neighbourInDirection(hero.tile, direction);
-      const targetKey = LM.minotaurBrain.tileKey(target);
+      const targetKey = LM.maze.tileKey(target);
       if (sealedDoors.has(targetKey)) {
         askDoorQuestion(targetKey);
       } else if (LM.maze.isWalkable(maze, target)) {
@@ -85,7 +82,7 @@
       if (W.isMoving(minotaur)) {
         return;
       }
-      const next = LM.minotaurBrain.chooseNextTile(maze, minotaur.tile, minotaurPrevious, blockedForMinotaur(), context.rng);
+      const next = LM.minotaurBrain.chooseNextTile(maze, minotaur.tile, minotaurPrevious, closedToMinotaur, context.rng);
       minotaurPrevious = minotaur.tile;
       W.startStep(minotaur, next);
       if (distance(minotaur.tile, hero.tile) < FOOTSTEP_HEARING_TILES) {
@@ -99,25 +96,23 @@
     }
 
     function checkTouch() {
-      if (safeSeconds > 0 || distance(W.position(hero), W.position(minotaur)) > TOUCH_DISTANCE) {
+      if (context.isRecovering() || distance(W.position(hero), W.position(minotaur)) > TOUCH_DISTANCE) {
         return;
       }
       LM.missionRun.addToStat(context.run, 'minotaurTouches', 1);
       context.loseHeart();
       sendMinotaurAway();
-      safeSeconds = SAFE_SECONDS_AFTER_TOUCH;
     }
 
     function update(dt, input) {
       elapsed += dt;
-      safeSeconds = Math.max(0, safeSeconds - dt);
       W.advance(hero, dt);
       if (!W.isMoving(hero) && LM.maze.sameTile(hero.tile, maze.goal)) {
         reachChamber();
         return;
       }
       const direction = readDirection(input);
-      if (!W.isMoving(hero) && direction && !isQuestionOpen) {
+      if (!W.isMoving(hero) && direction) {
         tryStep(direction);
       }
       moveMinotaur(dt);
@@ -131,13 +126,12 @@
       const heroPoint = R.tileCenter(layout, W.position(hero));
       const minotaurPoint = R.tileCenter(layout, W.position(minotaur));
       R.drawMinotaurFromAbove(ctx, minotaurPoint, minotaur.facing);
-      R.drawHeroFromAbove(ctx, heroPoint, hero.facing, safeSeconds > 0 && Math.floor(elapsed * 10) % 2 === 0);
+      if (!context.isBlinking()) {
+        R.drawHeroFromAbove(ctx, heroPoint, hero.facing);
+      }
       R.drawDarkness(ctx, heroPoint, LIGHT_RADIUS + Math.sin(elapsed * 9) * 4);
       R.drawThread(ctx, layout, thread.slice(0, -1), heroPoint);
-      sealedDoors.forEach(function (key) {
-        const parts = key.split(',');
-        R.drawSealedDoor(ctx, layout, { x: Number(parts[0]), y: Number(parts[1]) }, elapsed);
-      });
+      maze.doors.filter(isSealed).forEach(function (door) { R.drawSealedDoor(ctx, layout, door, elapsed); });
       R.drawGlowingEyes(ctx, minotaurPoint, elapsed);
     }
 
@@ -145,12 +139,11 @@
       W.placeAt(hero, checkpoint.tile);
       thread = checkpoint.thread.slice();
       sendMinotaurAway();
-      safeSeconds = SAFE_SECONDS_AFTER_TOUCH;
     }
 
     // Developer shortcut: walk straight to the next sealed door (or the chamber).
     function debugAdvance() {
-      const nextDoorIndex = maze.path.findIndex(function (tile) { return sealedDoors.has(LM.minotaurBrain.tileKey(tile)); });
+      const nextDoorIndex = maze.path.findIndex(isSealed);
       if (nextDoorIndex < 0) {
         thread = maze.path.slice();
         W.placeAt(hero, maze.goal);

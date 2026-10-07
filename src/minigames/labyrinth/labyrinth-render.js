@@ -83,10 +83,7 @@
     D.drawOutlinedPolygon(ctx, [[center.x + 9, center.y - 2], [center.x + 18, center.y - 16], [center.x + 4, center.y - 8]], '#f2e6c8', 2);
   }
 
-  function drawHeroFromAbove(ctx, point, facingAngle, isBlinking) {
-    if (isBlinking) {
-      return;
-    }
+  function drawHeroFromAbove(ctx, point, facingAngle) {
     ctx.save();
     ctx.translate(point.x, point.y);
     ctx.rotate(facingAngle);

@@ -1,4 +1,4 @@
-// After a mission: the score, new achievements, the mistakes with corrections, and "Warto zapamiętać".
+// After a mission or the exam: the score, new achievements, the mistakes with corrections, and "Warto zapamiętać".
 (function (LM) {
   'use strict';
 
@@ -11,14 +11,16 @@
   }
 
   function drawScoreBar(ctx, percent, x, y, width) {
-    LM.draw.drawOutlinedRoundRect(ctx, { x: x, y: y, width: width, height: 34 }, 10, '#e8dcc0', 3);
-    const fillWidth = Math.max(0, (width - 6) * percent / 100);
-    if (fillWidth > 0) {
-      LM.draw.fillRoundRect(ctx, { x: x + 3, y: y + 3, width: fillWidth, height: 28 }, 8, percent >= 70 ? P.correct : P.wrong);
-    }
+    const thresholdPercent = Math.round(LM.missionRun.PASS_THRESHOLD * 100);
+    LM.ui.drawMeter(ctx, { x: x, y: y, width: width, height: 34 }, percent / 100, percent >= thresholdPercent ? P.correct : P.wrong);
     const thresholdX = x + width * LM.missionRun.PASS_THRESHOLD;
     LM.draw.drawLine(ctx, thresholdX, y - 8, thresholdX, y + 42, P.ink, 3);
-    LM.text.drawTextLine(ctx, 'próg 70%', thresholdX, y + 64, { font: LM.text.boldFont(16), color: P.inkSoft, align: 'center' });
+    LM.text.drawTextLine(ctx, 'próg ' + thresholdPercent + '%', thresholdX, y + 64, { font: LM.text.boldFont(16), color: P.inkSoft, align: 'center' });
+  }
+
+  function attemptDetails(run) {
+    const hearts = 'Utracone serca: ' + run.heartsLost;
+    return run.hintBudget > 0 ? 'Użyte zwoje: ' + run.hintsUsed + ' z ' + run.hintBudget + '     ' + hearts : hearts;
   }
 
   // params: { scoreTitle, run, isPassed, newAchievements, concepts, backgroundIllustration, choices: [{ label, onChoose() }] }
@@ -33,11 +35,11 @@
 
     function drawScorePage(ctx, content) {
       const percent = LM.missionRun.scorePercent(run);
-      const title = params.isPassed ? game.say('Misja zaliczona! Brawo, ' + game.profile().name + '!') : 'Tym razem się nie udało, ale spróbuj jeszcze raz!';
+      const title = params.isPassed ? 'Zaliczone! Brawo, ' + game.profile().name + '!' : 'Tym razem się nie udało, ale spróbuj jeszcze raz!';
       LM.text.drawWrappedText(ctx, title, 640, content.y + 30, content.width, { font: LM.text.boldFont(30), color: params.isPassed ? P.correct : P.wrong, lineHeight: 36, align: 'center' });
       LM.text.drawTextLine(ctx, 'Dobre odpowiedzi za pierwszym razem: ' + LM.missionRun.correctCount(run) + ' z ' + run.answers.length + ' (' + percent + '%)', 640, content.y + 100, { font: LM.text.boldFont(22), color: P.ink, align: 'center' });
       drawScoreBar(ctx, percent, 290, content.y + 124, 700);
-      LM.text.drawTextLine(ctx, 'Użyte zwoje: ' + run.hintsUsed + ' z ' + LM.missionRun.HINTS_PER_MISSION + '     Utracone serca: ' + run.heartsLost, 640, content.y + 236, { font: LM.text.regularFont(20), color: P.inkSoft, align: 'center' });
+      LM.text.drawTextLine(ctx, attemptDetails(run), 640, content.y + 236, { font: LM.text.regularFont(20), color: P.inkSoft, align: 'center' });
       drawNewAchievements(ctx, content.y + 280);
     }
 

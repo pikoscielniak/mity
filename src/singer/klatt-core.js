@@ -21,10 +21,12 @@
       f1: 500, f2: 1500, f3: 2500, b1: 90, b2: 110, b3: 170, nasalZero: NASAL_POLE[0],
       noiseGain: 0, noiseFrequency: 4000, noiseQ: 1,
     };
-    const paramNames = Object.keys(params);
+    // Loudness and pitch change every sample; filter settings only every FILTER_UPDATE_SAMPLES samples.
+    const AUDIO_RATE_PARAMS = ['pitch', 'voicing', 'aspiration', 'noiseGain'];
+    const CONTROL_RATE_PARAMS = Object.keys(params).filter(function (name) { return AUDIO_RATE_PARAMS.indexOf(name) < 0; });
     const targets = Object.assign({}, params);
     const smoothing = {};
-    paramNames.forEach(function (name) { smoothing[name] = 0; });
+    Object.keys(params).forEach(function (name) { smoothing[name] = 0; });
 
     const resonators = [0, 1, 2, 3, 4].map(function () { return { a: 0, b: 0, c: 0, y1: 0, y2: 0 }; });
     const nasalPole = { a: 0, b: 0, c: 0, y1: 0, y2: 0 };
@@ -34,6 +36,7 @@
     let glottalPhase = 0;
     let tiltState = 0;
     let sampleCounter = 0;
+    let vibrato = 1;
 
     function tuneResonator(resonator, frequency, bandwidth) {
       const period = 1 / sampleRate;
@@ -89,8 +92,6 @@
       tuneResonator(resonators[0], params.f1, params.b1);
       tuneResonator(resonators[1], params.f2, params.b2);
       tuneResonator(resonators[2], params.f3, params.b3);
-      tuneResonator(resonators[3], FIXED_FORMANTS[0][0], FIXED_FORMANTS[0][1]);
-      tuneResonator(resonators[4], FIXED_FORMANTS[1][0], FIXED_FORMANTS[1][1]);
       tuneAntiResonator(nasalZero, params.nasalZero, NASAL_POLE[1]);
       tuneFricationFilter(params.noiseFrequency, params.noiseQ);
     }
@@ -110,16 +111,23 @@
       }
     }
 
-    function smoothParams() {
-      for (let index = 0; index < paramNames.length; index += 1) {
-        const name = paramNames[index];
-        params[name] = targets[name] + (params[name] - targets[name]) * smoothing[name];
+    // stepsPerCall: how many samples one call stands for (1 per sample, FILTER_UPDATE_SAMPLES per block).
+    function smoothParams(names, stepsPerCall) {
+      for (let index = 0; index < names.length; index += 1) {
+        const name = names[index];
+        const keep = stepsPerCall === 1 ? smoothing[name] : Math.pow(smoothing[name], stepsPerCall);
+        params[name] = targets[name] + (params[name] - targets[name]) * keep;
       }
     }
 
+    function updateControlRate(now) {
+      smoothParams(CONTROL_RATE_PARAMS, FILTER_UPDATE_SAMPLES);
+      updateFilters();
+      vibrato = Math.pow(2, VIBRATO_CENTS * Math.sin(TWO_PI * VIBRATO_HZ * now) / 1200);
+    }
+
     // Derivative of the KLGLOTT88 glottal flow: smooth opening, sharp closure (rich in harmonics).
-    function glottalSource(now) {
-      const vibrato = Math.pow(2, VIBRATO_CENTS * Math.sin(TWO_PI * VIBRATO_HZ * now) / 1200);
+    function glottalSource() {
       glottalPhase += params.pitch * vibrato / sampleRate;
       if (glottalPhase >= 1) {
         glottalPhase -= 1;
@@ -133,13 +141,13 @@
 
     function nextSample(now) {
       applyDueEvents(now);
-      smoothParams();
+      smoothParams(AUDIO_RATE_PARAMS, 1);
       if (sampleCounter % FILTER_UPDATE_SAMPLES === 0) {
-        updateFilters();
+        updateControlRate(now);
       }
       sampleCounter += 1;
       const noise = Math.random() * 2 - 1;
-      const excitation = glottalSource(now) * params.voicing + noise * params.aspiration;
+      const excitation = glottalSource() * params.voicing + noise * params.aspiration;
       tiltState += 0.5 * (excitation - tiltState);
       let voice = runAntiResonator(nasalZero, runResonator(nasalPole, tiltState));
       for (let index = 0; index < resonators.length; index += 1) {
@@ -150,6 +158,8 @@
     }
 
     tuneResonator(nasalPole, NASAL_POLE[0], NASAL_POLE[1]);
+    tuneResonator(resonators[3], FIXED_FORMANTS[0][0], FIXED_FORMANTS[0][1]);
+    tuneResonator(resonators[4], FIXED_FORMANTS[1][0], FIXED_FORMANTS[1][1]);
 
     function render(output, blockStartTime) {
       for (let index = 0; index < output.length; index += 1) {

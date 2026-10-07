@@ -54,8 +54,7 @@
     if (fill <= 0.02) {
       return;
     }
-    D.drawOutlinedRoundRect(ctx, { x: x - 50, y: y, width: 100, height: 12 }, 5, '#2a2a2a', 2);
-    D.fillRoundRect(ctx, { x: x - 48, y: y + 2, width: 96 * Math.min(1, fill), height: 8 }, 4, color);
+    LM.ui.drawMeter(ctx, { x: x - 50, y: y, width: 100, height: 14 }, fill, color);
     LM.ui.drawShadowText(ctx, label, x, y - 6, 16, P.white, 'center');
   }
 

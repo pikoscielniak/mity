@@ -96,10 +96,21 @@
       pointer.hasMoved = false;
     }
 
+    // -1, 0 or 1 along an axis, e.g. pressedStep('left', 'right') for one step through a list.
+    function pressedStep(negativeAction, positiveAction) {
+      return (pressedActions.has(positiveAction) ? 1 : 0) - (pressedActions.has(negativeAction) ? 1 : 0);
+    }
+
+    function heldStep(negativeAction, positiveAction) {
+      return (heldActions.has(positiveAction) ? 1 : 0) - (heldActions.has(negativeAction) ? 1 : 0);
+    }
+
     return {
       pointer,
       isHeld: function (action) { return heldActions.has(action); },
       wasPressed: function (action) { return pressedActions.has(action); },
+      pressedStep,
+      heldStep,
       wasAnyKeyPressed: function () { return anyKeyWasPressed; },
       pressedOptionIndex,
       endUpdate,

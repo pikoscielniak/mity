@@ -2,13 +2,9 @@
 (function (LM) {
   'use strict';
 
-  function tileKey(tile) {
-    return tile.x + ',' + tile.y;
-  }
-
   // blockedKeys: Set of "x,y" the Minotaur may not enter (sealed doors, the entrance).
   function chooseNextTile(maze, current, previous, blockedKeys, rng) {
-    const open = LM.maze.neighbours(maze, current).filter(function (tile) { return !blockedKeys.has(tileKey(tile)); });
+    const open = LM.maze.neighbours(maze, current).filter(function (tile) { return !blockedKeys.has(LM.maze.tileKey(tile)); });
     if (open.length === 0) {
       return current;
     }
@@ -30,5 +26,5 @@
     return rooms.length > 0 ? rooms[Math.floor(rng() * rooms.length)] : { x: maze.width - 2, y: maze.height - 2 };
   }
 
-  LM.minotaurBrain = { tileKey, chooseNextTile, pickDistantRoom };
+  LM.minotaurBrain = { chooseNextTile, pickDistantRoom };
 }(window.LM = window.LM || {}));

@@ -1,15 +1,18 @@
 // Hosts one mini-game stage: hearts, questions, pause, and the return to the last checkpoint after losing all hearts.
 // A stage (LM.stageFactories[type](context)) provides: update, render, hud(), keyHints(), restoreCheckpoint(), debugAdvance().
+// Its update is not called while an overlay (question, pause, hint) is open or while the hero is fainted.
 (function (LM) {
   'use strict';
 
   const MAX_HEARTS = 3;
   const FAINT_SECONDS = 2.2;
+  const GRACE_SECONDS = 1.6;
 
   function createStageScene(game, params) {
     const runner = params.runner;
     let heartsLeft = MAX_HEARTS;
     let faintTimer = 0;
+    let graceSeconds = 0;
     let stage = null;
 
     function askQuestion(slot, options, onAnswered) {
@@ -28,11 +31,13 @@
       }));
     }
 
+    // After a lost heart the hero is safe for a moment (and blinks), so one obstacle never costs two hearts.
     function loseHeart() {
-      if (faintTimer > 0) {
+      if (faintTimer > 0 || graceSeconds > 0) {
         return;
       }
       heartsLeft -= 1;
+      graceSeconds = GRACE_SECONDS;
       LM.missionRun.recordHeartLost(runner.run);
       game.sfx('heartLost');
       if (heartsLeft <= 0) {
@@ -42,6 +47,7 @@
 
     function recoverAtCheckpoint() {
       heartsLeft = MAX_HEARTS;
+      graceSeconds = GRACE_SECONDS;
       stage.restoreCheckpoint();
     }
 
@@ -53,11 +59,13 @@
       askQuestion: askQuestion,
       remainingQuestions: runner.remainingQuestions,
       loseHeart: loseHeart,
-      isFainted: function () { return faintTimer > 0; },
+      isRecovering: function () { return graceSeconds > 0; },
+      isBlinking: function () { return graceSeconds > 0 && Math.floor(graceSeconds * 10) % 2 === 0; },
       completeStage: function () { runner.completeStage(); },
     };
 
     function update(dt, input) {
+      graceSeconds = Math.max(0, graceSeconds - dt);
       if (faintTimer > 0) {
         faintTimer -= dt;
         if (faintTimer <= 0) {

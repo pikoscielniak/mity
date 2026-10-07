@@ -163,6 +163,16 @@
     LM.text.drawWrappedText(ctx, text, textLeft, rect.y + (rect.height - textHeight) / 2 + 20, maxWidth, style);
   }
 
+  // An outlined track filled in proportion to share (0..1): torch, danger meters, the score bar.
+  function drawMeter(ctx, rect, share, color) {
+    LM.draw.drawOutlinedRoundRect(ctx, rect, Math.min(10, rect.height / 2), '#e8dcc0', 2.5);
+    const inset = Math.max(2, rect.height * 0.12);
+    const fillWidth = (rect.width - inset * 2) * Math.min(1, Math.max(0, share));
+    if (fillWidth > 0) {
+      LM.draw.fillRoundRect(ctx, { x: rect.x + inset, y: rect.y + inset, width: fillWidth, height: rect.height - inset * 2 }, Math.min(8, rect.height / 2 - inset), color);
+    }
+  }
+
   // A small parchment tag, readable over any background; (x, y) is the text baseline centre.
   function drawTag(ctx, text, x, y) {
     const font = LM.text.boldFont(18);
@@ -250,6 +260,7 @@
     drawButton,
     drawNumberBadge,
     drawOptionRow,
+    drawMeter,
     drawTag,
     drawStoryBanner,
     drawDimmer,

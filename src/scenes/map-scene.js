@@ -100,7 +100,7 @@
     }
 
     function updateSelection(input) {
-      const step = (input.wasPressed('right') || input.wasPressed('down') ? 1 : 0) - (input.wasPressed('left') || input.wasPressed('up') ? 1 : 0);
+      const step = input.pressedStep('left', 'right') + input.pressedStep('up', 'down');
       if (step !== 0) {
         selectedIndex = (selectedIndex + step + DESTINATIONS.length) % DESTINATIONS.length;
         hoveredPlace = null;
@@ -113,10 +113,7 @@
 
     function update(dt, input) {
       elapsed += dt;
-      if (message) {
-        message.seconds -= dt;
-        message = message.seconds > 0 ? message : null;
-      }
+      message = LM.timed.tick(message, dt);
       if (voyage) {
         voyage.progress += dt / VOYAGE_SECONDS;
         if (voyage.progress >= 1) {
