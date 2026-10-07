@@ -13,10 +13,10 @@
     return highest + 1;
   }
 
-  // gender: 'boy' | 'girl' — used for Polish verb forms in game texts.
-  function createProfile(save, name, gender, nowIso) {
-    const profile = {
-      id: newProfileId(save),
+  // A profile that is not stored in any save (used when a developer view opens without a player).
+  function createDetachedProfile(id, name, gender, nowIso) {
+    return {
+      id: id,
       name: name.trim(),
       gender: gender,
       createdAt: nowIso,
@@ -27,6 +27,11 @@
       storiesHeard: [],
       history: [],
     };
+  }
+
+  // gender: 'boy' | 'girl' — used for Polish verb forms in game texts.
+  function createProfile(save, name, gender, nowIso) {
+    const profile = createDetachedProfile(newProfileId(save), name, gender, nowIso);
     save.profiles.push(profile);
     save.activeProfileId = profile.id;
     return profile;
@@ -90,6 +95,7 @@
   }
 
   LM.profiles = {
+    createDetachedProfile,
     createProfile,
     findProfile,
     activeProfile,

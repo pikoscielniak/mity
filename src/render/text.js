@@ -16,7 +16,7 @@
 
   // Polish typography: a one-letter word (a, i, o, u, w, z) must not end a line.
   function glueOneLetterWords(text) {
-    return text.replace(/(?<=^|\s)([aiouwzAIOUWZ])\s+/g, '$1' + NO_BREAK_SPACE);
+    return text.replace(/(?<=^|[\s(„])([aiouwzAIOUWZ])\s+/g, '$1' + NO_BREAK_SPACE);
   }
 
   function splitLongWord(ctx, word, maxWidth) {

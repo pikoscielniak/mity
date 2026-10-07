@@ -17,6 +17,7 @@ test('one-letter Polish words are glued to the next word', function () {
   assert.equal(LM.text.glueOneLetterWords('Tezeusz i Ariadna w labiryncie'), 'Tezeusz i' + NBSP + 'Ariadna w' + NBSP + 'labiryncie');
   assert.equal(LM.text.glueOneLetterWords('i w domu'), 'i' + NBSP + 'w' + NBSP + 'domu');
   assert.equal(LM.text.glueOneLetterWords('Zatem o tym'), 'Zatem o' + NBSP + 'tym');
+  assert.equal(LM.text.glueOneLetterWords('(U Parandowskiego)'), '(U' + NBSP + 'Parandowskiego)');
 });
 
 test('wrapText breaks lines at the given width', function () {

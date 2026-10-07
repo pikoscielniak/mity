@@ -12,7 +12,7 @@
       themeId: 'crete',
       songId: 'theseus',
       stages: [],
-      questionSlots: {},
+      questionSlots: { door: 5, duel: 5, ship: 2 },
     },
     {
       id: 'icarus',

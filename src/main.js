@@ -7,6 +7,7 @@
       isDebug: params.get('debug') === '1',
       startSceneName: params.get('scene'),
       seed: params.get('seed'),
+      sceneParams: Object.fromEntries(params.entries()),
     };
   }
 
@@ -22,6 +23,7 @@
   function addAudioServices(game) {
     game.audio = LM.audioHub.createAudioHub();
     game.music = LM.music.createMusicPlayer(game.audio);
+    game.speech = LM.speech.createSpeech(game.audio);
     game.sfx = function (name) {
       LM.sfx.playSfx(game.audio, name);
     };
@@ -43,12 +45,12 @@
     game.persist = function () {
       game.saveStore.save(game.save);
     };
+    const guest = LM.profiles.createDetachedProfile(0, 'Gość', 'boy', new Date().toISOString());
     game.profile = function () {
-      return LM.profiles.activeProfile(game.save);
+      return LM.profiles.activeProfile(game.save) || guest;
     };
     game.say = function (text) {
-      const profile = game.profile();
-      return LM.genderForms.applyGenderForms(text, profile ? profile.gender : 'boy');
+      return LM.genderForms.applyGenderForms(text, game.profile().gender);
     };
     game.applySettings = function () {
       const settings = game.profile().settings;
@@ -91,7 +93,7 @@
   function start() {
     const game = createGame();
     LM.game = game;
-    game.show(game.options.startSceneName || 'title');
+    game.show(game.options.startSceneName || 'title', game.options.sceneParams);
     LM.loop.startGameLoop(
       function (dt) { updateGame(game, dt); },
       function () { renderGame(game); }
