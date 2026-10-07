@@ -22,7 +22,7 @@
       themeId: 'sky',
       songId: 'icarus',
       stages: [],
-      questionSlots: {},
+      questionSlots: { workshop: 4, flight: 6, ending: 2 },
     },
     {
       id: 'orpheus',
