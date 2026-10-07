@@ -30,6 +30,7 @@
     const pages = ['score'].concat(mistakes.length > 0 ? ['mistakes'] : [], params.concepts.length > 0 ? ['concepts'] : []);
     let pageIndex = 0;
     let scroll = 0;
+    let maxScroll = 0;
     let elapsed = 0;
     let finalMenu = null;
 
@@ -56,10 +57,12 @@
       });
     }
 
+    // The list is measured while it is drawn, so the scroll stops once its end is in view.
     function drawList(ctx, content, entries) {
+      const visibleHeight = content.height - 70;
       ctx.save();
       ctx.beginPath();
-      ctx.rect(content.x, content.y, content.width, content.height - 70);
+      ctx.rect(content.x, content.y, content.width, visibleHeight);
       ctx.clip();
       let y = content.y + 24 - scroll;
       entries.forEach(function (entry) {
@@ -67,6 +70,7 @@
         y += LM.text.drawWrappedText(ctx, entry.body, content.x + 20, y, content.width - 20, { font: LM.text.regularFont(19), color: entry.bodyColor || P.inkSoft, lineHeight: 25 }) + ITEM_GAP;
       });
       ctx.restore();
+      maxScroll = Math.max(0, y + scroll - (content.y + visibleHeight));
     }
 
     function mistakeEntries() {
@@ -110,7 +114,7 @@
     function update(dt, input) {
       elapsed += dt;
       if (input.isHeld('down')) {
-        scroll += dt * 300;
+        scroll = Math.min(maxScroll, scroll + dt * 300);
       }
       if (input.isHeld('up')) {
         scroll = Math.max(0, scroll - dt * 300);
@@ -124,6 +128,7 @@
         } else {
           pageIndex += 1;
           scroll = 0;
+          maxScroll = 0;
         }
       }
     }

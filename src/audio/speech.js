@@ -51,29 +51,39 @@
       hub.restoreMusic();
     }
 
-    function createUtterance(chunk, speaker, isLast) {
+    function createUtterance(chunk, speaker) {
       const utterance = new SpeechSynthesisUtterance(chunk);
       utterance.lang = 'pl-PL';
       utterance.voice = pickVoice(polishVoices, speaker.voiceName);
       utterance.pitch = speaker.pitch;
       utterance.rate = speaker.rate;
       utterance.volume = hub.volume('voice');
-      if (isLast) {
-        utterance.onend = function () { hub.restoreMusic(); };
-      }
       return utterance;
+    }
+
+    // The music comes back when the narration ends or fails. Cancelled utterances report late,
+    // possibly during newer narration, so only the current narration's last utterance counts.
+    function restoreMusicAfter(lastUtterance) {
+      function restoreIfCurrent() {
+        if (speaking[speaking.length - 1] === lastUtterance) {
+          hub.restoreMusic();
+        }
+      }
+      lastUtterance.onend = restoreIfCurrent;
+      lastUtterance.onerror = restoreIfCurrent;
     }
 
     function speak(text, speakerId) {
       cancel();
-      if (!isAvailable()) {
+      const chunks = splitIntoChunks(text);
+      if (!isAvailable() || chunks.length === 0) {
         return;
       }
       const speaker = LM.data.voices[speakerId] || LM.data.voices.narrator;
-      const chunks = splitIntoChunks(text);
       hub.duckMusic();
       // Utterances are kept in an array: Chrome garbage-collects them otherwise and never fires onend.
-      speaking = chunks.map(function (chunk, index) { return createUtterance(chunk, speaker, index === chunks.length - 1); });
+      speaking = chunks.map(function (chunk) { return createUtterance(chunk, speaker); });
+      restoreMusicAfter(speaking[speaking.length - 1]);
       speaking.forEach(function (utterance) { synth.speak(utterance); });
     }
 

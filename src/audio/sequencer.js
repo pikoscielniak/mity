@@ -4,6 +4,7 @@
 
   const LOOKAHEAD_SECONDS = 0.6;
   const SCHEDULER_TICK_MS = 100;
+  const LATE_NOTE_TOLERANCE_SECONDS = 0.05;
   const DEFAULT_VELOCITY = 0.8;
   const timelineCache = new WeakMap();
 
@@ -54,8 +55,9 @@
   function createMusicPlayer(hub) {
     let current = null;
 
+    // Notes already late (after the page stalled) are skipped; playing them now would sound as one burst.
     function scheduleDueNotes(playing) {
-      const horizon = hub.context().currentTime + LOOKAHEAD_SECONDS;
+      const now = hub.context().currentTime;
       while (playing.timeline.length > 0) {
         if (playing.cursor >= playing.timeline.length) {
           if (!playing.theme.loop) {
@@ -65,10 +67,13 @@
           playing.cursor = 0;
         }
         const note = playing.timeline[playing.cursor];
-        if (playing.passStart + note.beat * playing.beatSeconds > horizon) {
+        const noteStart = playing.passStart + note.beat * playing.beatSeconds;
+        if (noteStart > now + LOOKAHEAD_SECONDS) {
           return;
         }
-        playNote(hub.context(), playing.gain, note, playing.passStart, playing.beatSeconds);
+        if (noteStart >= now - LATE_NOTE_TOLERANCE_SECONDS) {
+          playNote(hub.context(), playing.gain, note, playing.passStart, playing.beatSeconds);
+        }
         playing.cursor += 1;
       }
     }

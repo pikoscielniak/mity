@@ -1,8 +1,9 @@
-// Pause during a stage: continue, mute or unmute all sound, or leave the mission.
+// Pause during a stage or a question: continue, mute or unmute all sound, or go back to the map.
 (function (LM) {
   'use strict';
 
   function createPauseOverlay(game) {
+    const settings = game.profile().settings;
     let isConfirmingExit = false;
     const items = [
       { id: 'resume', label: 'Graj dalej' },
@@ -13,8 +14,17 @@
     const overlay = { kind: 'pause', update: update, render: render };
 
     function refreshLabels() {
-      items[1].label = game.audio.isMuted() ? 'Włącz dźwięki' : 'Wycisz dźwięki';
-      items[2].label = isConfirmingExit ? 'Na pewno? Postęp misji przepadnie' : 'Przerwij misję';
+      items[1].label = settings.isMuted ? 'Włącz dźwięki' : 'Wycisz dźwięki';
+      items[2].label = isConfirmingExit ? 'Na pewno? Ta próba przepadnie' : 'Przerwij i wróć na mapę';
+    }
+
+    function toggleMute() {
+      settings.isMuted = !settings.isMuted;
+      if (settings.isMuted) {
+        game.speech.cancel();
+      }
+      game.applySettings();
+      game.persist();
     }
 
     function update(dt, input) {
@@ -22,7 +32,7 @@
       if ((chosen && chosen.id === 'resume') || input.wasPressed('back')) {
         game.scenes.popOverlay(overlay);
       } else if (chosen && chosen.id === 'sound') {
-        game.audio.setMuted(!game.audio.isMuted());
+        toggleMute();
       } else if (chosen && chosen.id === 'exit' && isConfirmingExit) {
         game.show('map');
       } else if (chosen && chosen.id === 'exit') {
@@ -35,6 +45,7 @@
       LM.ui.drawDimmer(ctx);
       LM.ui.drawTitledPanel(ctx, { x: 400, y: 190, width: 480, height: 320 }, 'Pauza');
       menu.render(ctx);
+      LM.ui.drawKeyHintBar(ctx, [{ keys: ['↑', '↓'], label: 'wybór' }, { keys: ['Enter'], label: 'wybierz' }, { keys: ['Esc'], label: 'graj dalej' }]);
     }
 
     refreshLabels();

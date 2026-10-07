@@ -52,7 +52,9 @@
 
     function update(dt, input) {
       elapsed += dt;
-      if (phase === 'intro' && (input.wasPressed('confirm') || input.pointer.wasPressed)) {
+      if (phase === 'intro' && input.wasPressed('back')) {
+        game.show('map');
+      } else if (phase === 'intro' && (input.wasPressed('confirm') || input.pointer.wasPressed)) {
         phase = 'asking';
         game.speech.cancel();
         askNext();
@@ -65,7 +67,7 @@
       if (phase === 'intro') {
         LM.ui.drawParchmentPanel(ctx, { x: 120, y: 500, width: 1040, height: 150 });
         LM.text.drawWrappedText(ctx, introText, 150, 540, 980, { font: LM.text.boldFont(21), color: LM.palette.ink, lineHeight: 28 });
-        LM.ui.drawKeyHintBar(ctx, [{ keys: ['Enter'], label: 'zaczynamy' }]);
+        LM.ui.drawKeyHintBar(ctx, [{ keys: ['Enter'], label: 'zaczynamy' }, { keys: ['Esc'], label: 'wróć na mapę' }]);
       }
     }
 

@@ -1,4 +1,4 @@
-// Volumes, narration and full screen. ←/→ change the selected setting, Enter toggles, Esc returns.
+// Volumes, mute, narration and full screen. ←/→ change the selected setting, Enter toggles, Esc returns.
 (function (LM) {
   'use strict';
 
@@ -28,18 +28,20 @@
       { id: 'music', label: '' },
       { id: 'sfx', label: '' },
       { id: 'voice', label: '' },
+      { id: 'mute', label: '' },
       { id: 'narration', label: '' },
       { id: 'fullscreen', label: '' },
       { id: 'back', label: 'Wróć' },
     ];
-    const menu = LM.menu.createMenu(items, { x: 300, y: 190, width: 680, itemHeight: 52, gap: 12, fontSize: 22, playSound: game.sfx });
+    const menu = LM.menu.createMenu(items, { x: 300, y: 180, width: 680, itemHeight: 50, gap: 10, fontSize: 22, playSound: game.sfx });
 
     function refreshLabels() {
       items[0].label = 'Muzyka:  ' + percentLabel(settings.musicVolume);
       items[1].label = 'Efekty dźwiękowe:  ' + percentLabel(settings.sfxVolume);
       items[2].label = 'Lektor i śpiew:  ' + percentLabel(settings.voiceVolume);
-      items[3].label = 'Lektor czyta opowieści:  ' + (settings.isNarrationEnabled ? 'TAK' : 'NIE');
-      items[4].label = isFullscreen() ? 'Wyłącz pełny ekran' : 'Włącz pełny ekran';
+      items[3].label = 'Wszystkie dźwięki wyciszone:  ' + (settings.isMuted ? 'TAK' : 'NIE');
+      items[4].label = 'Lektor czyta opowieści:  ' + (settings.isNarrationEnabled ? 'TAK' : 'NIE');
+      items[5].label = isFullscreen() ? 'Wyłącz pełny ekran' : 'Włącz pełny ekran';
     }
 
     function changeVolume(itemId, direction) {
@@ -65,7 +67,10 @@
         changeVolume(selected.id, 1);
       }
       const chosen = menu.update(input);
-      if (chosen && chosen.id === 'narration') {
+      if (chosen && chosen.id === 'mute') {
+        settings.isMuted = !settings.isMuted;
+        game.applySettings();
+      } else if (chosen && chosen.id === 'narration') {
         settings.isNarrationEnabled = !settings.isNarrationEnabled;
       } else if (chosen && chosen.id === 'fullscreen') {
         toggleFullscreen();

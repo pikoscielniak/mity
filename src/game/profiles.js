@@ -5,7 +5,7 @@
   const MAX_HISTORY_ENTRIES = 200;
 
   function defaultSettings() {
-    return { musicVolume: 0.55, sfxVolume: 0.8, voiceVolume: 1, isNarrationEnabled: true };
+    return { musicVolume: 0.55, sfxVolume: 0.8, voiceVolume: 1, isNarrationEnabled: true, isMuted: false };
   }
 
   function newProfileId(save) {

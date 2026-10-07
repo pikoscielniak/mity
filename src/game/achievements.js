@@ -18,6 +18,10 @@
     return LM.data.missions.map(function (mission) { return mission.id; });
   }
 
+  function balladIds() {
+    return LM.data.missions.map(function (mission) { return mission.songId; });
+  }
+
   // There is no run when a ballad ends in the jukebox; such facts are never passed, so the run is not read.
   function passed(facts, missionId) {
     return facts.isPassed && facts.run.missionId === missionId;
@@ -30,17 +34,17 @@
   // facts: { run (or null), isPassed, profile }
   const RULES = {
     flawlessMission: function (facts) { return facts.isPassed && facts.run.missionId !== 'exam' && isFlawless(facts.run); },
-    noHints: function (facts) { return facts.isPassed && facts.run.hintsUsed === 0; },
+    noHints: function (facts) { return facts.isPassed && facts.run.hintBudget > 0 && facts.run.hintsUsed === 0; },
     untouchedByMinotaur: passedWithNone('theseus', 'minotaurTouches'),
     escapeWithoutLoss: passedWithNone('theseus', 'escapeHeartsLost'),
     stayedInGoldenMean: passedWithNone('icarus', 'secondsOutsideZone'),
     collectedAllFeathers: function (facts) {
-      return passed(facts, 'icarus') && stat(facts.run, 'feathersTotal') > 0 && stat(facts.run, 'feathersCollected') === stat(facts.run, 'feathersTotal');
+      return passed(facts, 'icarus') && stat(facts.run, 'feathersMissed') === 0 && stat(facts.run, 'feathersCollected') > 0;
     },
     playedEveryNote: passedWithNone('orpheus', 'notesMissed'),
     neverLookedBack: passedWithNone('orpheus', 'lookBacks'),
     heardEveryStory: function (facts) { return hasAll(facts.profile.storiesHeard, missionIds()); },
-    heardEveryBallad: function (facts) { return hasAll(facts.profile.balladsHeard, missionIds()); },
+    heardEveryBallad: function (facts) { return hasAll(facts.profile.balladsHeard, balladIds()); },
     passedExam: function (facts) { return passed(facts, 'exam'); },
     flawlessExam: function (facts) { return passed(facts, 'exam') && isFlawless(facts.run); },
   };

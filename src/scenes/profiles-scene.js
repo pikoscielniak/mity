@@ -7,9 +7,13 @@
   const PANEL = { x: 340, y: 130, width: 600, height: 470 };
   const NAME_FIELD = { x: 390, y: 300, width: 500, height: 56 };
 
+  const ROOMY_ROWS = { itemHeight: 54, gap: 10, fontSize: 22 };
+  // Six players plus "Nowy gracz" and "Usuń gracza" still fit inside the panel.
+  const COMPACT_ROWS = { itemHeight: 40, gap: 8, fontSize: 20 };
+
   function menuLayout(game, itemCount) {
-    const itemHeight = itemCount > 6 ? 46 : 54;
-    return { x: 380, y: 200, width: 520, itemHeight: itemHeight, gap: 10, fontSize: 22, playSound: game.sfx };
+    const rows = itemCount > 6 ? COMPACT_ROWS : ROOMY_ROWS;
+    return Object.assign({ x: 380, y: 200, width: 520, playSound: game.sfx }, rows);
   }
 
   function profileLabel(profile) {

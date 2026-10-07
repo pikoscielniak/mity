@@ -152,6 +152,11 @@
         openHint();
         return;
       }
+      // In the typed view Esc never gets here: the text field takes it as "nie wiem".
+      if (input.wasPressed('back')) {
+        game.scenes.pushOverlay(LM.pauseOverlay.createPauseOverlay(game));
+        return;
+      }
       const viewResponse = view.update(input);
       if (viewResponse) {
         answerFromView(viewResponse);
@@ -188,6 +193,9 @@
       const hints = view.keyHints.slice();
       if (hintPage) {
         hints.push({ keys: [question.type === 'typed' ? 'Tab' : 'H'], label: 'zwój (' + LM.missionRun.hintsLeft(request.run) + ')' });
+      }
+      if (question.type !== 'typed') {
+        hints.push({ keys: ['Esc'], label: 'pauza' });
       }
       return hints;
     }

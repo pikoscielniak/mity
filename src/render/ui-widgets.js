@@ -169,7 +169,8 @@
     const inset = Math.max(2, rect.height * 0.12);
     const fillWidth = (rect.width - inset * 2) * Math.min(1, Math.max(0, share));
     if (fillWidth > 0) {
-      LM.draw.fillRoundRect(ctx, { x: rect.x + inset, y: rect.y + inset, width: fillWidth, height: rect.height - inset * 2 }, Math.min(8, rect.height / 2 - inset), color);
+      const radius = Math.min(8, rect.height / 2 - inset, fillWidth / 2);
+      LM.draw.fillRoundRect(ctx, { x: rect.x + inset, y: rect.y + inset, width: fillWidth, height: rect.height - inset * 2 }, radius, color);
     }
   }
 

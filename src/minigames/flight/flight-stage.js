@@ -92,8 +92,7 @@
         nextGullIn = 3.2 + rng() * 2;
       }
       if (nextFeatherIn <= 0 && phase === 'icarus') {
-        feathers.push({ x: 1340, y: F.HOT_LIMIT + 30 + rng() * (F.WET_LIMIT - F.HOT_LIMIT - 60) });
-        LM.missionRun.addToStat(context.run, 'feathersTotal', 1);
+        feathers.push({ x: 1340, y: F.HOT_LIMIT + 30 + rng() * (F.WET_LIMIT - F.HOT_LIMIT - 60), isMissed: false });
         nextFeatherIn = 2.2 + rng();
       }
     }
@@ -104,6 +103,16 @@
       islands.forEach(function (island) { island.x -= 70 * dt; });
       gulls = gulls.filter(function (gull) { return gull.x > -60; });
       feathers = feathers.filter(function (feather) { return feather.x > -40; });
+    }
+
+    // A feather counts as missed once it has flown past the flyer; feathers still on their way when a leg ends do not.
+    function recordMissedFeathers() {
+      feathers.forEach(function (feather) {
+        if (!feather.isMissed && feather.x < FLYER_X - TOUCH_DISTANCE) {
+          feather.isMissed = true;
+          LM.missionRun.addToStat(context.run, 'feathersMissed', 1);
+        }
+      });
     }
 
     function checkTouches() {
@@ -172,6 +181,7 @@
       spawnTraffic(dt);
       moveTraffic(dt);
       checkTouches();
+      recordMissedFeathers();
       updateScroll(dt);
       finishLegIfDone();
     }
@@ -278,11 +288,12 @@
     function hud() {
       const title = phase === 'daedalus' || phase === 'arrive' ? 'Dedal leci na Sycylię' : 'Lot nad morzem';
       const total = isPlayerFlying() ? leg().total : 0;
-      const stats = context.run.stats;
+      const collected = context.run.stats.feathersCollected || 0;
+      const missed = context.run.stats.feathersMissed || 0;
       return {
         title: title,
         rightText: total > 0 ? 'Zwoje: ' + scrollsCaught + '/' + total : '',
-        bottomText: 'Pióra: ' + (stats.feathersCollected || 0) + '/' + (stats.feathersTotal || 0),
+        bottomText: 'Pióra: ' + collected + '/' + (collected + missed),
       };
     }
 

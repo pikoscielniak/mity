@@ -31,7 +31,8 @@
       game.music.play(LM.data.themes[themeId]);
     };
     game.narrate = function (text, speakerId) {
-      if (game.profile().settings.isNarrationEnabled) {
+      const settings = game.profile().settings;
+      if (settings.isNarrationEnabled && !settings.isMuted) {
         game.speech.speak(text, speakerId);
       }
     };
@@ -62,6 +63,7 @@
       game.audio.setVolume('music', settings.musicVolume);
       game.audio.setVolume('sfx', settings.sfxVolume);
       game.audio.setVolume('voice', settings.voiceVolume);
+      game.audio.setMuted(Boolean(settings.isMuted));
     };
   }
 
@@ -111,7 +113,8 @@
   function start() {
     const game = createGame();
     LM.game = game;
-    game.show(game.options.startSceneName || 'title', game.options.sceneParams);
+    const startSceneName = LM.sceneFactories[game.options.startSceneName] ? game.options.startSceneName : 'title';
+    game.show(startSceneName, game.options.sceneParams);
     LM.loop.startGameLoop(
       function (dt) { updateGame(game, dt); },
       function () { renderGame(game); }

@@ -14,9 +14,10 @@
     Digit3: 'option3', Numpad3: 'option3',
     Digit4: 'option4', Numpad4: 'option4',
     Digit5: 'option5', Numpad5: 'option5',
+    Digit6: 'option6', Numpad6: 'option6',
   };
 
-  const OPTION_ACTIONS = ['option1', 'option2', 'option3', 'option4', 'option5'];
+  const OPTION_ACTIONS = ['option1', 'option2', 'option3', 'option4', 'option5', 'option6'];
 
   function isTextField(target) {
     return Boolean(target) && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA');

@@ -41,6 +41,10 @@
       game.narrate(shownText, pages[pageIndex].speaker);
     }
 
+    function isOnLastPage() {
+      return pageIndex === pages.length - 1;
+    }
+
     function isPageFullyShown() {
       return lettersShown >= shownText.length;
     }
@@ -48,7 +52,7 @@
     function goForward() {
       if (!isPageFullyShown()) {
         lettersShown = shownText.length;
-      } else if (pageIndex < pages.length - 1) {
+      } else if (!isOnLastPage()) {
         game.sfx('page');
         showPage(pageIndex + 1);
       } else {
@@ -60,7 +64,7 @@
       elapsed += dt;
       lettersShown = Math.min(shownText.length, lettersShown + dt * LETTERS_PER_SECOND);
       if (input.wasPressed('back')) {
-        params.onFinished(true);
+        params.onFinished(!isOnLastPage());
       } else if (input.wasPressed('left') && pageIndex > 0) {
         game.sfx('page');
         showPage(pageIndex - 1);

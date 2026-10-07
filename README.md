@@ -33,7 +33,7 @@ Powstaje `dist/labirynt-mitow.html`, czyli cała gra w jednym pliku (ok. 460 KB)
 | Enter / Spacja | dalej, zatwierdź |
 | 1–4 | odpowiedź w pytaniach |
 | H | zwój z podpowiedzią (fragment opowieści; 3 na misję) |
-| Esc | pomiń opowieść, pauza, menu na mapie |
+| Esc | pomiń opowieść, pauza (w mini-grze i w pytaniu), menu na mapie |
 
 Myszą da się klikać odpowiedzi, przeciągać karty w pytaniach „ułóż w kolejności” i wybierać miejsca na mapie.
 
@@ -47,6 +47,7 @@ Myszą da się klikać odpowiedzi, przeciągać karty w pytaniach „ułóż w k
 - Serca traci się tylko w mini-grach, i to łagodnie: gra uczy mitów, a nie wyrabia refleks.
 - W menu mapy (Esc) jest **Historia wyników** każdego podejścia i lista osiągnięć.
 - Postęp zapisuje się w przeglądarce (localStorage), osobno dla każdego profilu gracza.
+- Dźwięk wycisza się w pauzie albo w ustawieniach. Wyciszenie zostaje zapisane w profilu, dopóki nie włączysz dźwięku z powrotem.
 
 ## Technika
 
