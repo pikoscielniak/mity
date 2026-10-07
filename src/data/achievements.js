@@ -17,7 +17,7 @@
     achievement('nie-obejrzal', 'Nie obejrzał{eś|aś} się ani razu', 'Cała droga z podziemi bez spojrzenia za siebie.', 'neverLookedBack'),
     achievement('mol-ksiazkowy', 'Mól książkowy', 'Wysłuchane wszystkie trzy opowieści, bez pomijania.', 'heardEveryStory'),
     achievement('spiewak-z-tracji', 'Śpiewak z Tracji', 'Wszystkie trzy ballady wysłuchane do końca.', 'heardEveryBallad'),
-    achievement('znawca-mitow', 'Znawca mitów', 'Egzamin u Pytii w Delfach zdany.', 'passedExam'),
+    achievement('znawca-mitow', 'Znawc{a|zyni} mitów','Egzamin u Pytii w Delfach zdany.', 'passedExam'),
     achievement('wyrocznia', 'Wyrocznia pod wrażeniem', 'Egzamin bez jednego błędu.', 'flawlessExam'),
   ];
 }(window.LM = window.LM || {}));
