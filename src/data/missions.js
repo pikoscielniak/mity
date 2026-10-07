@@ -32,7 +32,7 @@
       themeId: 'underworld',
       songId: 'orpheus',
       stages: [],
-      questionSlots: {},
+      questionSlots: { guardian: 6, echo: 4, ending: 2 },
     },
   ];
 
