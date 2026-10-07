@@ -115,5 +115,17 @@
     });
   }
 
-  LM.scenery = { drawSky, drawSun, drawCloud, drawSea, drawIsland, drawTemple, drawShip };
+  // The coast at sunset used behind the title, player and settings screens.
+  function drawSunsetCoast(ctx, elapsed) {
+    drawSky(ctx, { x: 0, y: 0, width: 1280, height: 520 }, '#1d3f94', '#f7c58a');
+    drawSun(ctx, 1010, 470, 80, elapsed);
+    drawCloud(ctx, ((elapsed * 12) % 1500) - 200, 350, 1.0);
+    drawCloud(ctx, ((elapsed * 7 + 700) % 1500) - 200, 420, 0.7);
+    drawSea(ctx, { x: 0, y: 520, width: 1280, height: 200 }, elapsed);
+    drawIsland(ctx, 300, 524, 460, 150);
+    drawTemple(ctx, 290, 404, 0.9);
+    drawShip(ctx, 820, 580, 0.75, '#1a1a1a', elapsed);
+  }
+
+  LM.scenery = { drawSky, drawSun, drawCloud, drawSea, drawIsland, drawTemple, drawShip, drawSunsetCoast };
 }(window.LM = window.LM || {}));

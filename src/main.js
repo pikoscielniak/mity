@@ -10,20 +10,18 @@
     };
   }
 
-  function createGame() {
-    const canvas = document.getElementById('game');
-    const view = LM.view.createCanvasView(canvas, window);
-    const game = {
-      view: view,
-      input: LM.input.createInput(view, window),
-      options: readUrlOptions(),
-    };
-    game.scenes = LM.sceneManager.createSceneManager(game);
+  // Reading window.localStorage itself throws in some privacy modes.
+  function browserStorage() {
+    try {
+      return window.localStorage;
+    } catch (error) {
+      return null;
+    }
+  }
+
+  function addAudioServices(game) {
     game.audio = LM.audioHub.createAudioHub();
     game.music = LM.music.createMusicPlayer(game.audio);
-    game.show = function (sceneName, params) {
-      game.scenes.replaceScene(LM.sceneFactories[sceneName](game, params || {}));
-    };
     game.sfx = function (name) {
       LM.sfx.playSfx(game.audio, name);
     };
@@ -37,6 +35,46 @@
       }
       game.playTheme('title');
     };
+  }
+
+  function addProfileServices(game) {
+    game.saveStore = LM.storage.createSaveStore(browserStorage());
+    game.save = game.saveStore.load();
+    game.persist = function () {
+      game.saveStore.save(game.save);
+    };
+    game.profile = function () {
+      return LM.profiles.activeProfile(game.save);
+    };
+    game.say = function (text) {
+      const profile = game.profile();
+      return LM.genderForms.applyGenderForms(text, profile ? profile.gender : 'boy');
+    };
+    game.applySettings = function () {
+      const settings = game.profile().settings;
+      game.audio.setVolume('music', settings.musicVolume);
+      game.audio.setVolume('sfx', settings.sfxVolume);
+      game.audio.setVolume('voice', settings.voiceVolume);
+    };
+  }
+
+  function createGame() {
+    const canvas = document.getElementById('game');
+    const view = LM.view.createCanvasView(canvas, window);
+    const game = {
+      view: view,
+      input: LM.input.createInput(view, window),
+      textInput: LM.textInput.createTextInputOverlay(view, document.getElementById('answer-input'), window),
+      options: readUrlOptions(),
+    };
+    game.scenes = LM.sceneManager.createSceneManager(game);
+    game.show = function (sceneName, params) {
+      game.scenes.replaceScene(LM.sceneFactories[sceneName](game, params || {}));
+    };
+    game.startMission = function () {};
+    game.startExam = function () {};
+    addAudioServices(game);
+    addProfileServices(game);
     return game;
   }
 
