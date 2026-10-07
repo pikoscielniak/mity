@@ -11,7 +11,7 @@
       mapPlaceId: 'crete',
       themeId: 'crete',
       songId: 'theseus',
-      stages: [],
+      stages: ['labyrinth', 'duel', 'escape', 'ship'],
       questionSlots: { door: 5, duel: 5, ship: 2 },
     },
     {

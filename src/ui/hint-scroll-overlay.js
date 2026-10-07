@@ -16,6 +16,7 @@
 
   function createHintScrollOverlay(game, page, hintsLeft) {
     const overlay = {
+      kind: 'hint',
       update: function (dt, input) {
         if (input.wasPressed('confirm') || input.wasPressed('back') || input.wasPressed('hint') || input.pointer.wasPressed) {
           game.sfx('page');

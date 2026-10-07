@@ -37,7 +37,16 @@
     let phase = 'asking';
     let hintWasUsed = false;
     let view = null;
-    const overlay = { update: update, render: render, exit: exit };
+    const overlay = {
+      kind: 'question',
+      question: question,
+      update: update,
+      render: render,
+      exit: exit,
+      answerWith: function (response) { submit(response); },
+      isShowingFeedback: function () { return phase === 'feedback'; },
+      continueAfterFeedback: function () { continueAfterFeedback(); },
+    };
 
     function createView() {
       if (question.type === 'choice') {

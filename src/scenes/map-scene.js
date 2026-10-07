@@ -41,7 +41,11 @@
       menu.render(ctx);
     }
 
-    return { update, render };
+    return {
+      enter: function () { game.playTheme('map'); },
+      update: update,
+      render: render,
+    };
   }
 
   LM.sceneFactories.map = createMapScene;

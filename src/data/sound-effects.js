@@ -35,6 +35,7 @@
       { instrument: 'snare', notes: 'C4/8', velocity: 0.7 },
     ]),
     splash: effect(160, [{ instrument: 'snare', notes: 'C4/8 C4/16', velocity: 0.6 }]),
+    minotaurStep: effect(200, [{ instrument: 'kick', notes: 'C2/8', velocity: 0.45 }]),
     achievement: effect(260, [
       { instrument: 'bell', notes: 'G5/16 C6/16 E6/16 G6/16 E6/16 G6/4' },
       { instrument: 'marimba', notes: 'C5/8 r/8 C5/8 E5/4', velocity: 0.6 },

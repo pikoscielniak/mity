@@ -25,6 +25,7 @@
       achievements: {},
       unlockedSongs: [],
       storiesHeard: [],
+      balladsHeard: [],
       history: [],
     };
   }
@@ -94,6 +95,10 @@
     addOnce(profile.storiesHeard, missionId);
   }
 
+  function recordBalladHeard(profile, songId) {
+    addOnce(profile.balladsHeard, songId);
+  }
+
   LM.profiles = {
     createDetachedProfile,
     createProfile,
@@ -105,5 +110,6 @@
     isExamUnlocked,
     recordMissionResult,
     recordStoryHeard,
+    recordBalladHeard,
   };
 }(window.LM = window.LM || {}));

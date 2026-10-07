@@ -71,10 +71,18 @@
     };
     game.scenes = LM.sceneManager.createSceneManager(game);
     game.show = function (sceneName, params) {
-      game.scenes.replaceScene(LM.sceneFactories[sceneName](game, params || {}));
+      const scene = LM.sceneFactories[sceneName](game, params || {});
+      scene.sceneName = sceneName;
+      game.scenes.replaceScene(scene);
     };
-    game.startMission = function () {};
-    game.startExam = function () {};
+    game.startMission = function (missionId) {
+      const seed = game.options.seed ? Number(game.options.seed) : LM.random.randomSeed();
+      game.currentMission = LM.missionRunner.createMissionRunner(game, missionId, seed);
+      game.currentMission.start();
+    };
+    game.startExam = function () {
+      game.show('exam');
+    };
     addAudioServices(game);
     addProfileServices(game);
     return game;
